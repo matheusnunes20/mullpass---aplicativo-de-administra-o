@@ -1,0 +1,11 @@
+# Flutter
+build/
+.dart_tool/
+.packages
+pubspec.lock
+android/.gradle
+ios/Pods
+
+# Node
+node_modules/
+.env
