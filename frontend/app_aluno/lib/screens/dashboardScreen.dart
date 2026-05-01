@@ -1,28 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'loginScreen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
+import 'loginScreen.dart';
 import 'rachaScreen.dart';
 import 'createRachaScreen.dart';
 import 'createAulaScreen.dart';
 import 'homeScreen.dart';
 import 'presencaScreen.dart';
+import 'turmasScreen.dart';
+import 'financeiroScreen.dart';
+import 'financeiroAdminScreen.dart'; // 🔥 IMPORT ADICIONADO
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   final String token;
   final Map user;
 
   DashboardScreen({required this.token, required this.user});
 
   @override
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool bloqueado = false;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    verificarFinanceiro();
+  }
+
+  Future<void> verificarFinanceiro() async {
+    try {
+      final res = await http.get(
+        Uri.parse('http://10.0.2.2:3000/financeiro/me'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+
+        if (data['status'] == 'atrasado') {
+          setState(() {
+            bloqueado = true;
+            loading = false;
+          });
+          return;
+        }
+      }
+
+      setState(() {
+        loading = false;
+      });
+    } catch (e) {
+      print(e);
+      setState(() => loading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = widget.user;
     final isAluno = user['tipo'] == 'aluno';
     final isStaff =
         user['tipo'] == 'funcionario' || user['tipo'] == 'admin';
 
-    // 🔥 SEGURANÇA DE DADOS
     final username = (user['username'] ?? 'Usuário').toString();
     final tipo = (user['tipo'] ?? '').toString();
+
+    if (loading) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -31,209 +86,240 @@ class DashboardScreen extends StatelessWidget {
         title: Text('Arena Mull'),
         backgroundColor: Colors.amber,
         foregroundColor: Colors.black,
-        elevation: 0,
-
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () async {
-              final sair = await showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: Text('Sair'),
-                  content: Text('Deseja realmente sair?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: Text('Cancelar'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: Text('Sair'),
-                    ),
-                  ],
-                ),
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('token');
+
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => LoginScreen()),
+                (route) => false,
               );
-
-              if (sair == true) {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.remove('token');
-
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => LoginScreen()),
-                  (route) => false,
-                );
-              }
             },
           )
         ],
       ),
 
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-
-            // 👋 HEADER
-            Container(
-              width: double.infinity,
+      body: bloqueado
+          ? _telaBloqueada(context)
+          : SingleChildScrollView(
               padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.amber, Colors.orange],
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Colors.black,
-                    child: Text(
-                      username[0].toUpperCase(), // 🔥 corrigido
-                      style: TextStyle(color: Colors.white, fontSize: 22),
+
+                  // HEADER
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.amber, Colors.orange],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Colors.black,
+                          child: Text(
+                            username[0].toUpperCase(),
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        SizedBox(width: 15),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Olá, $username'),
+                            Text(tipo.toUpperCase()),
+                          ],
+                        )
+                      ],
                     ),
                   ),
-                  SizedBox(width: 15),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                  SizedBox(height: 25),
+
+                  Text('Ações',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
+                  SizedBox(height: 15),
+
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 15,
+                    mainAxisSpacing: 15,
                     children: [
-                      Text(
-                        'Olá, $username 👋', // 🔥 corrigido
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        tipo.toUpperCase(), // 🔥 corrigido
-                        style: TextStyle(color: Colors.black87),
-                      ),
+
+                      // 🔥 BOTÃO FINANCEIRO CORRIGIDO
+                      card(context, 'Financeiro', Icons.attach_money,
+                          Colors.red, () {
+                        if (isStaff) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => FinanceiroAdminScreen(
+                                token: widget.token,
+                              ),
+                            ),
+                          );
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => FinanceiroScreen(
+                                token: widget.token,
+                              ),
+                            ),
+                          );
+                        }
+                      }),
+
+                      // 👤 ALUNO
+                      if (isAluno) ...[
+                        card(context, 'Presença', Icons.check_circle,
+                            Colors.green, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  PresencaScreen(token: widget.token),
+                            ),
+                          );
+                        }),
+
+                        card(context, 'Rachas',
+                            Icons.sports_volleyball, Colors.orange, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RachaScreen(
+                                token: widget.token,
+                                user: widget.user,
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+
+                      // 👨‍💼 STAFF
+                      if (isStaff) ...[
+                        card(context, 'Criar Racha', Icons.add, Colors.black,
+                            () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  CreateRachaScreen(token: widget.token),
+                            ),
+                          );
+                        }),
+
+                        card(context, 'Ver Rachas', Icons.list,
+                            Colors.orange, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RachaScreen(
+                                token: widget.token,
+                                user: widget.user,
+                              ),
+                            ),
+                          );
+                        }),
+
+                        card(context, 'Alunos', Icons.group, Colors.blue, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  HomeScreen(token: widget.token),
+                            ),
+                          );
+                        }),
+
+                        card(context, 'Presenças', Icons.checklist,
+                            Colors.green, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  TurmasScreen(token: widget.token),
+                            ),
+                          );
+                        }),
+                      ],
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
+    );
+  }
 
-            SizedBox(height: 25),
-
+  Widget _telaBloqueada(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock, size: 80, color: Colors.red),
+            SizedBox(height: 20),
             Text(
-              'Ações',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              'Acesso bloqueado',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-
-            SizedBox(height: 15),
-
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              children: [
-
-                // 👤 ALUNO
-                if (isAluno) ...[
-                  card(context, 'Presença', Icons.check_circle, Colors.green, () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PresencaScreen(token: token),
-                      ),
-                    );
-                  }),
-
-                  card(context, 'Rachas', Icons.sports_volleyball, Colors.orange, () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => RachaScreen(
-                          token: token,
-                          user: user,
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-
-                // 👨‍🏫 FUNCIONÁRIO + ADMIN
-                if (isStaff) ...[
-                  card(context, 'Criar Racha', Icons.add_circle, Colors.black, () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CreateRachaScreen(token: token),
-                      ),
-                    );
-                  }),
-
-                  card(context, 'Ver Rachas', Icons.list, Colors.orange, () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => RachaScreen(
-                          token: token,
-                          user: user,
-                        ),
-                      ),
-                    );
-                  }),
-
-                  card(context, 'Agendar Aula', Icons.calendar_month, Colors.purple, () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CreateAulaScreen(token: token),
-                      ),
-                    );
-                  }),
-
-                  card(context, 'Alunos', Icons.group, Colors.blue, () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => HomeScreen(token: token),
-                      ),
-                    );
-                  }),
-                ],
-              ],
+            SizedBox(height: 10),
+            Text(
+              'Vá até a recepção e renove sua mensalidade',
+              textAlign: TextAlign.center,
             ),
+            SizedBox(height: 30),
+
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        FinanceiroScreen(token: widget.token),
+                  ),
+                );
+              },
+              child: Text('Ir para financeiro'),
+            )
           ],
         ),
       ),
     );
   }
 
-  Widget card(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget card(BuildContext context, String title, IconData icon,
+      Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 3),
-            )
-          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 40, color: Colors.white),
             SizedBox(height: 10),
-            Text(
-              title,
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            )
+            Text(title,
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))
           ],
         ),
       ),

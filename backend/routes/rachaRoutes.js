@@ -1,27 +1,56 @@
+import express from 'express';
 import {
   criarRacha,
   listarRachas,
   entrarRacha,
-  listarJogadoresRacha // 🔥 ADICIONA AQUI
+  listarJogadoresRacha
 } from '../controlleres/rachaController.js';
 
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { permit } from '../middlewares/roleMiddleware.js';
-import express from 'express';
-
+import { deletarRacha } from '../controlleres/rachaController.js';
 
 const router = express.Router();
 
-// 🔥 LISTAR (qualquer logado)
-router.get('/', authMiddleware, listarRachas);
 
-// 🔥 CRIAR (só funcionário)
-router.post('/', authMiddleware, permit('funcionario', 'admin'), criarRacha);
+// 🔥 CRIAR RACHA (SÓ FUNCIONÁRIO/ADMIN)
+router.post(
+  '/',
+  authMiddleware,
+  permit('admin', 'funcionario'),
+  criarRacha
+);
 
-// 🔥 ENTRAR (só aluno)
-router.post('/entrar', authMiddleware, permit('aluno'), entrarRacha);
 
-// 🔥 LISTAR (só jogadores)
-router.get('/:id/jogadores', authMiddleware, listarJogadoresRacha);
+// 🔥 LISTAR RACHAS
+router.get(
+  '/',
+  authMiddleware,
+  listarRachas
+);
+
+
+// 🔥 ENTRAR NO RACHA (ALUNO)
+router.post(
+  '/entrar',
+  authMiddleware,
+  entrarRacha
+);
+
+
+// 🔥 LISTAR JOGADORES DO RACHA (ESSA QUE FALTAVA)
+router.get(
+  '/:id/jogadores',
+  authMiddleware,
+  listarJogadoresRacha
+);
+
+// 🔥 DELETAR RACHA
+router.delete(
+  '/:id',
+  authMiddleware,
+  deletarRacha
+);
+
 
 export default router;

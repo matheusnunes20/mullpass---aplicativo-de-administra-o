@@ -1,36 +1,75 @@
 import pool from '../src/db.js';
 
-// 🔥 CRIAR RACHA (FUNCIONÁRIO)
+
+// 🔥 CRIAR RACHA (AJUSTADO PARA USAR COLUNA "hora")
 export const criarRacha = async (req, res) => {
   try {
-    const { data, hora, local, quadra, limite, tipo } = req.body;
+    console.log('USER DEBUG:', req.user);
 
-    if (!data || !hora || !local || !quadra || !limite || !tipo) {
+    const userId = req.user?.id || req.user?.usuario_id;
+
+    if (!userId) {
+      return res.status(401).send('Acesso negado');
+    }
+
+    const { data, hora_inicio, hora_fim, local, quadra, limite, tipo } = req.body;
+
+    if (!data || !hora_inicio || !hora_fim || !local || !quadra || !limite || !tipo) {
       return res.status(400).send('Campos obrigatórios faltando');
     }
 
+    // 🔥 FORMATA PARA STRING (EX: 18:00 - 23:00)
+    const horaInicioFormatada = hora_inicio.includes(':')
+      ? hora_inicio
+      : `${hora_inicio}:00`;
+
+    const horaFimFormatada = hora_fim.includes(':')
+      ? hora_fim
+      : `${hora_fim}:00`;
+
+    const horaFinal = `${horaInicioFormatada} - ${horaFimFormatada}`;
+
     const result = await pool.query(
-      `INSERT INTO rachas (data, hora, local, quadra, limite, tipo, criado_por)
+      `INSERT INTO rachas 
+      (data, hora, local, quadra, limite, tipo, criado_por)
        VALUES ($1,$2,$3,$4,$5,$6,$7)
        RETURNING *`,
-      [data, hora, local, quadra, limite, tipo, req.userId]
+      [
+        data,
+        horaFinal, // 🔥 AGORA USA "hora"
+        local,
+        quadra,
+        limite,
+        tipo,
+        userId
+      ]
     );
 
-    res.json(result.rows[0]);
+    res.status(201).json(result.rows[0]);
 
   } catch (err) {
-    console.error(err);
+    console.error('ERRO CRIAR RACHA:', err);
     res.status(500).send('Erro ao criar racha');
   }
 };
 
 
-// 🔥 LISTAR RACHAS
+// 🔥 LISTAR RACHAS (AJUSTADO PARA "hora")
 export const listarRachas = async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM rachas ORDER BY data DESC'
-    );
+    const result = await pool.query(`
+      SELECT 
+        id,
+        data,
+        hora,
+        local,
+        quadra,
+        limite,
+        tipo,
+        criado_por  -- 🔥 ESSENCIAL
+      FROM rachas
+      ORDER BY data DESC
+    `);
 
     res.json(result.rows);
 
@@ -40,6 +79,8 @@ export const listarRachas = async (req, res) => {
   }
 };
 
+
+// 🔥 LISTAR JOGADORES
 export const listarJogadoresRacha = async (req, res) => {
   try {
     const { id } = req.params;
@@ -61,7 +102,7 @@ export const listarJogadoresRacha = async (req, res) => {
 };
 
 
-// 🔥 ENTRAR NO RACHA (ALUNO)
+// 🔥 ENTRAR NO RACHA
 export const entrarRacha = async (req, res) => {
   try {
     const { racha_id } = req.body;
@@ -70,10 +111,15 @@ export const entrarRacha = async (req, res) => {
       return res.status(400).send('Racha não informado');
     }
 
-    // 🔥 pegar aluno logado
+    const userId = req.user?.id || req.user?.usuario_id;
+
+    if (!userId) {
+      return res.status(401).send('Acesso negado');
+    }
+
     const alunoResult = await pool.query(
-      'SELECT * FROM alunos WHERE usuario_id = $1',
-      [req.userId]
+      `SELECT id FROM alunos WHERE usuario_id = $1`,
+      [req.user.id]
     );
 
     const aluno = alunoResult.rows[0];
@@ -82,7 +128,6 @@ export const entrarRacha = async (req, res) => {
       return res.status(400).send('Aluno não encontrado');
     }
 
-    // 🔥 evitar duplicado
     const jaExiste = await pool.query(
       'SELECT * FROM racha_jogadores WHERE racha_id = $1 AND aluno_id = $2',
       [racha_id, aluno.id]
@@ -92,7 +137,6 @@ export const entrarRacha = async (req, res) => {
       return res.status(400).send('Você já está nesse racha');
     }
 
-    // 🔥 pegar racha
     const rachaResult = await pool.query(
       'SELECT * FROM rachas WHERE id = $1',
       [racha_id]
@@ -104,7 +148,6 @@ export const entrarRacha = async (req, res) => {
       return res.status(404).send('Racha não encontrado');
     }
 
-    // 🔥 validar limite
     const count = await pool.query(
       'SELECT COUNT(*) FROM racha_jogadores WHERE racha_id = $1',
       [racha_id]
@@ -114,12 +157,10 @@ export const entrarRacha = async (req, res) => {
       return res.status(400).send('Racha lotado');
     }
 
-    // 🔥 validar feminino
     if (racha.tipo === 'feminino' && aluno.sexo !== 'feminino') {
       return res.status(400).send('Racha exclusivo feminino');
     }
 
-    // 🔥 inserir
     await pool.query(
       'INSERT INTO racha_jogadores (racha_id, aluno_id) VALUES ($1,$2)',
       [racha_id, aluno.id]
@@ -130,5 +171,53 @@ export const entrarRacha = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('Erro ao entrar no racha');
+  }
+};
+
+
+export const deletarRacha = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const userId = req.user?.id || req.user?.usuario_id;
+
+    if (!userId) {
+      return res.status(401).send('Acesso negado');
+    }
+
+    const result = await pool.query(
+      'SELECT * FROM rachas WHERE id = $1',
+      [id]
+    );
+
+    const racha = result.rows[0];
+
+    if (!racha) {
+      return res.status(404).send('Racha não encontrado');
+    }
+
+    // 🔥 CORREÇÃO AQUI
+    if (
+      racha.criado_por.toString() !== userId.toString() &&
+      req.user.tipo !== 'admin'
+    ) {
+      return res.status(403).send('Sem permissão');
+    }
+
+    await pool.query(
+      'DELETE FROM racha_jogadores WHERE racha_id = $1',
+      [id]
+    );
+
+    await pool.query(
+      'DELETE FROM rachas WHERE id = $1',
+      [id]
+    );
+
+    res.send('Racha deletado');
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Erro ao deletar racha');
   }
 };

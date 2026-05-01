@@ -12,9 +12,15 @@ export const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = decoded; // 🔥 ISSO É ESSENCIAL
+    req.user = {
+      id: parseInt(decoded.id || decoded.usuario_id), // 🔥 CORREÇÃO
+      tipo: decoded.tipo
+    };
+
+    console.log('USER LOGADO:', req.user); // 🔥 antes do next
 
     next();
+
   } catch (err) {
     return res.status(401).send('Token inválido');
   }

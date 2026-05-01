@@ -1,7 +1,22 @@
 export const permit = (...tiposPermitidos) => {
   return (req, res, next) => {
-    if (!tiposPermitidos.includes(req.userTipo)) {
-      return res.status(403).send('Acesso negado');
+
+    if (!req.user) {
+      return res.status(401).json({
+        erro: 'Não autenticado'
+      });
+    }
+
+    if (!req.user.tipo) {
+      return res.status(403).json({
+        erro: 'Tipo de usuário não definido'
+      });
+    }
+
+    if (!tiposPermitidos.includes(req.user.tipo)) {
+      return res.status(403).json({
+        erro: 'Acesso negado'
+      });
     }
 
     next();

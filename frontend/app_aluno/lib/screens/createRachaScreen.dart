@@ -2,39 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../widgets/dateInput.dart';
+import '../widgets/timeRangeInput.dart';
+
 class CreateRachaScreen extends StatefulWidget {
   final String token;
 
-  CreateRachaScreen({required this.token});
+  const CreateRachaScreen({required this.token});
 
   @override
-  _CreateRachaScreenState createState() => _CreateRachaScreenState();
+  State<CreateRachaScreen> createState() => _CreateRachaScreenState();
 }
 
 class _CreateRachaScreenState extends State<CreateRachaScreen> {
   final dataController = TextEditingController();
   final localController = TextEditingController();
   final limiteController = TextEditingController();
+  final horaInicioController = TextEditingController();
+  final horaFimController = TextEditingController();
 
-  String hora = '18h às 19h';
   String quadra = 'Quadra 1';
   String tipo = 'misto';
-
   bool loading = false;
 
   Future<void> criarRacha() async {
     if (dataController.text.isEmpty ||
         localController.text.isEmpty ||
-        limiteController.text.isEmpty) {
+        limiteController.text.isEmpty ||
+        horaInicioController.text.isEmpty ||
+        horaFimController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Preencha todos os campos obrigatórios')),
-      );
-      return;
-    }
-
-    if (int.tryParse(limiteController.text) == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Limite deve ser um número válido')),
+        const SnackBar(content: Text('Preencha todos os campos')),
       );
       return;
     }
@@ -50,7 +48,8 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
         },
         body: jsonEncode({
           'data': dataController.text,
-          'hora': hora,
+          'hora_inicio': horaInicioController.text,
+          'hora_fim': horaFimController.text,
           'local': localController.text,
           'quadra': quadra,
           'limite': int.parse(limiteController.text),
@@ -60,11 +59,10 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
 
       setState(() => loading = false);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Racha criado com sucesso')),
+          const SnackBar(content: Text('Racha criado com sucesso')),
         );
-
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -73,9 +71,8 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
       }
     } catch (e) {
       setState(() => loading = false);
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro de conexão com servidor')),
+        const SnackBar(content: Text('Erro ao criar racha')),
       );
     }
   }
@@ -83,11 +80,11 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
   Widget campo(
     TextEditingController controller,
     String label, {
-    TextInputType? keyboardType,
     IconData? icon,
+    TextInputType? keyboardType,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
@@ -112,7 +109,7 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
     IconData? icon,
   }) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 14),
       child: DropdownButtonFormField<String>(
         value: value,
         items: items,
@@ -131,17 +128,27 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
   }
 
   @override
+  void dispose() {
+    dataController.dispose();
+    localController.dispose();
+    limiteController.dispose();
+    horaInicioController.dispose();
+    horaFimController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text('Criar Racha / Day Use'),
+        title: const Text('Criar Racha / Day Use'),
         centerTitle: true,
         backgroundColor: Colors.amber,
         foregroundColor: Colors.black,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(18),
+        padding: const EdgeInsets.all(18),
         child: Column(
           children: [
             Image.asset(
@@ -149,7 +156,7 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
               height: 90,
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             Card(
               elevation: 4,
@@ -157,11 +164,11 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Padding(
-                padding: EdgeInsets.all(18),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Informações do Racha',
                       style: TextStyle(
                         fontSize: 18,
@@ -169,32 +176,18 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
                       ),
                     ),
 
-                    SizedBox(height: 18),
+                    const SizedBox(height: 18),
 
-                    campo(
-                      dataController,
-                      'Data (YYYY-MM-DD)',
-                      icon: Icons.calendar_today,
+                    DateInput(controller: dataController),
+
+                    const SizedBox(height: 14),
+
+                    TimeRangeInput(
+                      inicioController: horaInicioController,
+                      fimController: horaFimController,
                     ),
 
-                    dropdown(
-                      label: 'Horário',
-                      value: hora,
-                      icon: Icons.access_time,
-                      items: [
-                        DropdownMenuItem(
-                          value: '18h às 19h',
-                          child: Text('18h às 19h'),
-                        ),
-                        DropdownMenuItem(
-                          value: '19h às 20h',
-                          child: Text('19h às 20h'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() => hora = value!);
-                      },
-                    ),
+                    const SizedBox(height: 14),
 
                     campo(
                       localController,
@@ -206,7 +199,7 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
                       label: 'Quadra',
                       value: quadra,
                       icon: Icons.sports_volleyball,
-                      items: [
+                      items: const [
                         DropdownMenuItem(
                           value: 'Quadra 1',
                           child: Text('Quadra 1'),
@@ -236,7 +229,7 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
                       label: 'Tipo da lista',
                       value: tipo,
                       icon: Icons.group,
-                      items: [
+                      items: const [
                         DropdownMenuItem(
                           value: 'misto',
                           child: Text('Misto'),
@@ -255,14 +248,14 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
               ),
             ),
 
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
 
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: loading ? null : criarRacha,
                 icon: loading
-                    ? SizedBox(
+                    ? const SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
@@ -270,12 +263,12 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
                           strokeWidth: 2,
                         ),
                       )
-                    : Icon(Icons.add),
+                    : const Icon(Icons.add),
                 label: Text(loading ? 'Criando...' : 'Criar Racha'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 18),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),

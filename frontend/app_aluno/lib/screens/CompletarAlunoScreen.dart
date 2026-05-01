@@ -29,16 +29,22 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
   final numeroController = TextEditingController();
   final bairroController = TextEditingController();
 
-  // 🔥 VALORES INICIAIS CORRETOS
   String modalidade = 'volei';
   String diaSemana = 'segunda-feira e quarta-feira';
   String horario = '18-19';
   String professor = 'caua';
   String sexo = 'feminino';
 
-  bool loading = false;
+  // 🔥 NOVO → PLANO
+  int planoId = 1;
 
-// 🔥 IMPORTANTE: esse arquivo veio de você :contentReference[oaicite:0]{index=0}
+  final planos = {
+    1: 'Vôlei - R\$120',
+    2: 'Futevôlei - R\$150',
+    3: 'Beach Tennis - R\$200',
+  };
+
+  bool loading = false;
 
   Future<void> salvarAluno() async {
     setState(() => loading = true);
@@ -58,8 +64,9 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
         'professor': professor,
         'sexo': sexo,
 
-        // 🔥 ESSA LINHA RESOLVE SEU SISTEMA
+        // 🔥 ESSENCIAL
         'usuario_id': widget.usuarioId,
+        'plano_id': planoId,
       };
 
       print('BODY ENVIO: $body');
@@ -121,12 +128,11 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
     );
   }
 
-  // 🔥 DROPDOWN BLINDADO
   Widget dropdown(String label, String value, List<String> items, Function(String?) onChanged) {
     return Padding(
       padding: EdgeInsets.only(bottom: 10),
       child: DropdownButtonFormField<String>(
-        value: items.contains(value) ? value : null, // 🔥 evita crash
+        value: items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(
@@ -172,7 +178,6 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
         child: Column(
           children: [
 
-            // 🔥 DADOS DO USUÁRIO
             campo('Nome', TextEditingController(text: widget.nome)),
             campo('Telefone', TextEditingController(text: widget.telefone)),
             campo('Email', TextEditingController(text: widget.email)),
@@ -205,6 +210,29 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
             dropdown('Sexo', sexo, sexos, (v) {
               setState(() => sexo = v!);
             }),
+
+            // 🔥 NOVO → PLANO
+            Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: DropdownButtonFormField<int>(
+                value: planoId,
+                decoration: InputDecoration(
+                  labelText: 'Plano',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                items: planos.entries.map((e) {
+                  return DropdownMenuItem(
+                    value: e.key,
+                    child: Text(e.value),
+                  );
+                }).toList(),
+                onChanged: (v) {
+                  setState(() => planoId = v!);
+                },
+              ),
+            ),
 
             SizedBox(height: 20),
 

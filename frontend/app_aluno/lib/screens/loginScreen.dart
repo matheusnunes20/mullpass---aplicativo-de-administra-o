@@ -58,17 +58,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final user = jsonDecode(userResponse.body);
 
+        print('🔥 USER LOGADO: $user');
+
         // 🔥 SALVAR TOKEN
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
 
-        // 🔥 REGRA CORRETA → SEM REDIRECIONAMENTO ERRADO
+        // 🔥 AQUI FOI A CORREÇÃO PRINCIPAL
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => DashboardScreen(
               token: token,
-              user: user,
+              user: user, // 👈 AGORA VAI COMPLETO
             ),
           ),
         );
@@ -117,7 +119,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-
                 Container(
                   padding: EdgeInsets.all(15),
                   decoration: BoxDecoration(

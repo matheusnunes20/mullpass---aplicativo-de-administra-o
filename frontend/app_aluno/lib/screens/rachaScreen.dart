@@ -36,11 +36,9 @@ class _RachaScreenState extends State<RachaScreen> {
         setState(() {
           rachas = jsonDecode(response.body);
         });
-      } else {
-        print('Erro ao buscar rachas: ${response.body}');
       }
     } catch (e) {
-      print('Erro buscar rachas: $e');
+      print(e);
     }
   }
 
@@ -66,10 +64,57 @@ class _RachaScreenState extends State<RachaScreen> {
     }
   }
 
+  Future<void> deletarRacha(int id) async {
+    final response = await http.delete(
+      Uri.parse('http://10.0.2.2:3000/rachas/$id'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      buscarRachas();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Racha excluído')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response.body)),
+      );
+    }
+  }
+
+  void confirmarDelete(int id) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Excluir racha'),
+        content: Text('Deseja realmente excluir este racha?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              deletarRacha(id);
+            },
+            child: Text(
+              'Excluir',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final podeCriarRacha =
-        widget.user['tipo'] == 'funcionario' || widget.user['tipo'] == 'admin';
+        widget.user['tipo'] == 'funcionario' ||
+        widget.user['tipo'] == 'admin';
 
     return Scaffold(
       appBar: AppBar(
@@ -94,16 +139,14 @@ class _RachaScreenState extends State<RachaScreen> {
           : null,
 
       body: rachas.isEmpty
-          ? Center(
-              child: Text(
-                'Nenhum racha criado ainda 😢',
-                style: TextStyle(fontSize: 16),
-              ),
-            )
+          ? Center(child: Text('Nenhum racha criado ainda 😢'))
           : ListView.builder(
               itemCount: rachas.length,
               itemBuilder: (_, i) {
                 final r = rachas[i];
+
+                final isDono = widget.user['id'].toString() == r['criado_por'].toString();
+                final isAdmin = widget.user['tipo'] == 'admin';
 
                 return Card(
                   elevation: 3,
@@ -113,10 +156,12 @@ class _RachaScreenState extends State<RachaScreen> {
                   ),
                   child: ListTile(
                     contentPadding: EdgeInsets.all(12),
+
                     title: Text(
                       '${r['local']} - ${r['quadra']}',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
+
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -127,6 +172,7 @@ class _RachaScreenState extends State<RachaScreen> {
                         Text('⚽ ${r['tipo']}'),
                       ],
                     ),
+
                     onTap: () {
                       Navigator.push(
                         context,
@@ -139,16 +185,29 @@ class _RachaScreenState extends State<RachaScreen> {
                         ),
                       );
                     },
-                    trailing: widget.user['tipo'] == 'aluno'
-                        ? ElevatedButton(
+
+                    // 🔥 AQUI ESTÁ O BOTÃO QUE VOCÊ QUER
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+
+                        if (widget.user['tipo'] == 'aluno')
+                          ElevatedButton(
                             onPressed: () => entrarRacha(r['id']),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
                             ),
                             child: Text('Entrar'),
-                          )
-                        : null,
+                          ),
+
+                        if (isDono || isAdmin)
+                          IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () => confirmarDelete(r['id']),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
