@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 
+import pool from './db.js'; // 👈 IMPORTANTE
+
 import alunosRoutes from '../routes/alunosRoutes.js';
 import authRoutes from '../routes/authRoutes.js';
 import rachaRoutes from '../routes/rachaRoutes.js';
@@ -20,11 +22,40 @@ import { gerarMensalidades } from '../services/financeiroService.js';
 dotenv.config();
 
 const app = express();
+
 cron.schedule('0 2 * * *', () => {
   gerarMensalidades();
 });
+
 app.use(cors({ origin: '*' }));
 app.use(express.json());
+
+/**
+ * 🔥 TESTE DE CONEXÃO COM BANCO
+ */
+app.get('/test-db', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({
+      success: true,
+      time: result.rows[0]
+    });
+  } catch (err) {
+    console.error('ERRO DB:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+/**
+ * 🔥 ROTA ROOT
+ */
+app.get('/', (req, res) => {
+  res.send('API OK 🚀');
+});
+
 app.use('/auth', authRoutes);
 app.use('/alunos', alunosRoutes);
 app.use('/usuarios', authMiddleware, usuariosRoutes);
@@ -38,8 +69,5 @@ app.use('/aulas', authMiddleware, bloquearInadimplente, aulasRoutes);
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
-});
-
-app.get('/', (req, res) => {
-  res.send('API OK 🚀');
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
