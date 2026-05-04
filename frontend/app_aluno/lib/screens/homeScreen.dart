@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> buscarUsuario() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/usuarios/me'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/usuarios/me'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> buscarAlunos() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/alunos'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/alunos'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },

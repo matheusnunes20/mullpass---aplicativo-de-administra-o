@@ -32,7 +32,7 @@ class _CreateAulaScreenState extends State<CreateAulaScreen> {
     setState(() => loading = true);
 
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/aulas'),
+      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/aulas'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json'

@@ -26,7 +26,7 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
   Future<void> carregar() async {
     try {
       final res = await http.get(
-        Uri.parse('http://10.0.2.2:3000/financeiro/alunos'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/financeiro/alunos'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
@@ -48,7 +48,7 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
   Future<void> pagar(int id) async {
     try {
       final res = await http.put(
-        Uri.parse('http://10.0.2.2:3000/financeiro/pagar/$id'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/financeiro/pagar/$id'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 

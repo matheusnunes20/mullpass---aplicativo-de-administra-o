@@ -28,7 +28,7 @@ class _TurmasScreenState extends State<TurmasScreen> {
   Future<void> buscarUsuario() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/usuarios/me'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/usuarios/me'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
@@ -44,12 +44,12 @@ class _TurmasScreenState extends State<TurmasScreen> {
   Future<void> carregarDados() async {
     try {
       final turmasRes = await http.get(
-        Uri.parse('http://10.0.2.2:3000/turmas'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/turmas'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
       final minhaRes = await http.get(
-        Uri.parse('http://10.0.2.2:3000/inscricoes/me'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/inscricoes/me'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
@@ -74,7 +74,7 @@ class _TurmasScreenState extends State<TurmasScreen> {
   Future<void> entrarNaTurma(int turmaId) async {
     try {
       await http.post(
-        Uri.parse('http://10.0.2.2:3000/inscricoes'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/inscricoes'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json'

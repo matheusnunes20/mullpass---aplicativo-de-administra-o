@@ -31,7 +31,7 @@ class _HistoricoAlunoScreenState extends State<HistoricoAlunoScreen> {
   Future<void> carregarHistorico() async {
     final res = await http.get(
       Uri.parse(
-          'http://10.0.2.2:3000/presencas/aluno/${widget.alunoId}/historico'),
+          'https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/aluno/${widget.alunoId}/historico'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
       },

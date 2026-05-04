@@ -28,7 +28,7 @@ class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
 
   Future<void> buscarJogadores() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:3000/rachas/${widget.rachaId}/jogadores'),
+      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas/${widget.rachaId}/jogadores'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
       },

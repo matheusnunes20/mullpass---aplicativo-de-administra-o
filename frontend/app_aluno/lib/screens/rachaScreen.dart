@@ -26,7 +26,7 @@ class _RachaScreenState extends State<RachaScreen> {
   Future<void> buscarRachas() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/rachas'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
@@ -43,7 +43,7 @@ class _RachaScreenState extends State<RachaScreen> {
 
   Future<void> entrarRacha(int id) async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/rachas/entrar'),
+      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas/entrar'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ class _RachaScreenState extends State<RachaScreen> {
 
   Future<void> deletarRacha(int id) async {
     final response = await http.delete(
-      Uri.parse('http://10.0.2.2:3000/rachas/$id'),
+      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas/$id'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
       },

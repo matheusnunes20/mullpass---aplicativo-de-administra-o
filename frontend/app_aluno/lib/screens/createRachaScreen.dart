@@ -41,7 +41,7 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/rachas'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

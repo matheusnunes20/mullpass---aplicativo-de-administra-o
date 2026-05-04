@@ -29,7 +29,7 @@ class _PresencaScreenState extends State<PresencaScreen> {
 
   Future<void> carregarTurmas() async {
     final res = await http.get(
-      Uri.parse('http://10.0.2.2:3000/presencas/turmas'),
+      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/turmas'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
 
@@ -42,7 +42,7 @@ class _PresencaScreenState extends State<PresencaScreen> {
 
   Future<void> carregarPresencaHoje() async {
     final res = await http.get(
-      Uri.parse('http://10.0.2.2:3000/presencas/hoje'),
+      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/hoje'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
 
@@ -61,7 +61,7 @@ class _PresencaScreenState extends State<PresencaScreen> {
 
   Future<void> confirmarPresenca() async {
     final res = await http.post(
-      Uri.parse('http://10.0.2.2:3000/presencas/confirmar'),
+      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/confirmar'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json'
@@ -88,7 +88,7 @@ class _PresencaScreenState extends State<PresencaScreen> {
 
   Future<void> removerPresenca() async {
     final res = await http.delete(
-      Uri.parse('http://10.0.2.2:3000/presencas/remover'),
+      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/remover'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
 

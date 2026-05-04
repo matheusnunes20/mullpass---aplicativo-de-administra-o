@@ -66,7 +66,7 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
       };
 
 final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/alunos/public'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/alunos/public'),
         headers: {
           'Content-Type': 'application/json',
         },

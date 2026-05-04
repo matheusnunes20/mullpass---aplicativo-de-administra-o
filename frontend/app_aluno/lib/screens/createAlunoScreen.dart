@@ -36,7 +36,7 @@ class _CreateAlunoScreenState extends State<CreateAlunoScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/auth/register'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': emailController.text.trim(),

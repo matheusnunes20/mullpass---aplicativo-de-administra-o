@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/auth/login'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'login': loginInput,
@@ -44,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final data = jsonDecode(response.body);
         final token = data['token'];
         final userResponse = await http.get(
-          Uri.parse('http://10.0.2.2:3000/usuarios/me'),
+          Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/usuarios/me'),
           headers: {
             'Authorization': 'Bearer $token',
           },

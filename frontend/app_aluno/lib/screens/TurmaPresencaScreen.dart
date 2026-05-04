@@ -33,7 +33,7 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://10.0.2.2:3000/presencas/turma/${widget.turmaId}'),
+            'https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/turma/${widget.turmaId}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },

@@ -25,7 +25,7 @@ class _AlunoDetalheScreenState extends State<AlunoDetalheScreen> {
   Future<void> carregarDados() async {
     try {
       final res = await http.get(
-        Uri.parse('http://10.0.2.2:3000/alunos/${widget.alunoId}'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/alunos/${widget.alunoId}'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 

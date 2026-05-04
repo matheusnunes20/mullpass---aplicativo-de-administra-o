@@ -36,7 +36,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> verificarFinanceiro() async {
     try {
       final res = await http.get(
-        Uri.parse('http://10.0.2.2:3000/financeiro/me'),
+        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/financeiro/me'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
