@@ -11,7 +11,7 @@ import 'homeScreen.dart';
 import 'presencaScreen.dart';
 import 'turmasScreen.dart';
 import 'financeiroScreen.dart';
-import 'financeiroAdminScreen.dart'; // 🔥 IMPORT ADICIONADO
+import 'financeiroAdminScreen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String token;
@@ -58,7 +58,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         loading = false;
       });
     } catch (e) {
-      print(e);
       setState(() => loading = false);
     }
   }
@@ -110,8 +109,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  // HEADER
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(20),
@@ -158,8 +155,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     crossAxisSpacing: 15,
                     mainAxisSpacing: 15,
                     children: [
-
-                      // 🔥 BOTÃO FINANCEIRO CORRIGIDO
                       card(context, 'Financeiro', Icons.attach_money,
                           Colors.red, () {
                         if (isStaff) {
@@ -183,15 +178,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         }
                       }),
 
-                      // 👤 ALUNO
+                      // 🔥 ALUNO
                       if (isAluno) ...[
                         card(context, 'Presença', Icons.check_circle,
                             Colors.green, () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  PresencaScreen(token: widget.token),
+                              builder: (_) => PresencaScreen(
+                                token: widget.token,
+                                nome: username, // 🔥 CORRIGIDO
+                              ),
                             ),
                           );
                         }),
@@ -210,7 +207,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         }),
                       ],
 
-                      // 👨‍💼 STAFF
+                      // 🔥 STAFF
                       if (isStaff) ...[
                         card(context, 'Criar Racha', Icons.add, Colors.black,
                             () {
@@ -284,7 +281,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 30),
-
             ElevatedButton(
               onPressed: () {
                 Navigator.push(

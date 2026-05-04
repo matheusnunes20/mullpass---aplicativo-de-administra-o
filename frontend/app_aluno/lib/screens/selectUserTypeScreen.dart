@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'createAlunoScreen.dart';
-import 'createFuncionarioScreen.dart'; // 🔥 IMPORT NOVO
+import 'createFuncionarioScreen.dart';
 
 class SelectUserTypeScreen extends StatelessWidget {
   @override
@@ -22,8 +22,6 @@ class SelectUserTypeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
-              // 🔥 TÍTULO
               Text(
                 'Como você deseja se cadastrar?',
                 textAlign: TextAlign.center,
@@ -34,8 +32,6 @@ class SelectUserTypeScreen extends StatelessWidget {
               ),
 
               SizedBox(height: 40),
-
-              // 🟡 BOTÃO ALUNO
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -71,8 +67,6 @@ class SelectUserTypeScreen extends StatelessWidget {
               ),
 
               SizedBox(height: 20),
-
-              // ⚫ BOTÃO FUNCIONÁRIO
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -89,7 +83,7 @@ class SelectUserTypeScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CreateFuncionarioScreen(), // 🔥 AQUI ESTÁ A MUDANÇA
+                        builder: (context) => CreateFuncionarioScreen(),
                       ),
                     );
                   },

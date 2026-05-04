@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'HistoricoAlunoScreen.dart';
 
 class TurmaPresencaScreen extends StatefulWidget {
   final String token;
@@ -47,7 +48,6 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
         setState(() => loading = false);
       }
     } catch (e) {
-      print(e);
       setState(() => loading = false);
     }
   }
@@ -60,6 +60,25 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
+        // 🔥 CLICK PARA VER HISTÓRICO
+        onTap: () {
+          final alunoId =
+              int.tryParse(aluno['id'].toString()) ?? 0;
+
+          if (alunoId == 0) return;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HistoricoAlunoScreen(
+                token: widget.token,
+                alunoId: alunoId,
+                nome: aluno['nome'],
+              ),
+            ),
+          );
+        },
+
         leading: CircleAvatar(
           backgroundColor: Colors.green,
           child: Icon(Icons.check, color: Colors.white),

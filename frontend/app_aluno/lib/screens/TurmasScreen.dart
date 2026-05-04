@@ -38,7 +38,6 @@ class _TurmasScreenState extends State<TurmasScreen> {
         });
       }
     } catch (e) {
-      print(e);
     }
   }
 
@@ -57,7 +56,6 @@ class _TurmasScreenState extends State<TurmasScreen> {
       final data = jsonDecode(turmasRes.body);
 
       setState(() {
-        // 🔥 CORREÇÃO AQUI
         turmas = [
           ...data['manha'],
           ...data['noite'],
@@ -69,7 +67,6 @@ class _TurmasScreenState extends State<TurmasScreen> {
         loading = false;
       });
     } catch (e) {
-      print(e);
       setState(() => loading = false);
     }
   }
@@ -89,7 +86,6 @@ class _TurmasScreenState extends State<TurmasScreen> {
 
       carregarDados();
     } catch (e) {
-      print(e);
     }
   }
 

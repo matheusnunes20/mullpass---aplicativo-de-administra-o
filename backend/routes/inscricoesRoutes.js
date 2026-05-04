@@ -3,9 +3,6 @@ import pool from '../src/db.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
-
-
-// 🔥 ENTRAR NA TURMA
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { turma_id } = req.body;
@@ -13,8 +10,6 @@ router.post('/', authMiddleware, async (req, res) => {
     if (!turma_id) {
       return res.status(400).json({ erro: 'turma_id obrigatório' });
     }
-
-    // 🔥 pega aluno pelo usuário logado
     const alunoResult = await pool.query(
       `SELECT id FROM alunos WHERE usuario_id = $1`,
       [req.user.id]
@@ -25,8 +20,6 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const aluno_id = alunoResult.rows[0].id;
-
-    // 🔥 verifica se turma existe
     const turmaResult = await pool.query(
       `SELECT limite FROM turmas WHERE id = $1`,
       [turma_id]
@@ -37,8 +30,6 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const limite = turmaResult.rows[0].limite;
-
-    // 🔥 conta inscritos
     const count = await pool.query(
       `SELECT COUNT(*) FROM inscricoes WHERE turma_id = $1`,
       [turma_id]
@@ -49,14 +40,10 @@ router.post('/', authMiddleware, async (req, res) => {
     if (total >= limite) {
       return res.status(400).json({ erro: 'Turma lotada' });
     }
-
-    // 🔥 remove turma anterior
     await pool.query(
       `DELETE FROM inscricoes WHERE aluno_id = $1`,
       [aluno_id]
     );
-
-    // 🔥 entra na nova turma
     const result = await pool.query(
       `INSERT INTO inscricoes (aluno_id, turma_id)
        VALUES ($1, $2)
@@ -71,9 +58,6 @@ router.post('/', authMiddleware, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao entrar na turma' });
   }
 });
-
-
-// 🔥 MINHA TURMA
 router.get('/me', authMiddleware, async (req, res) => {
   try {
 
@@ -114,9 +98,6 @@ router.get('/me', authMiddleware, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao buscar turma' });
   }
 });
-
-
-// 🔥 SAIR DA TURMA
 router.delete('/me', authMiddleware, async (req, res) => {
   try {
 
@@ -143,6 +124,5 @@ router.delete('/me', authMiddleware, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao sair da turma' });
   }
 });
-
 
 export default router;

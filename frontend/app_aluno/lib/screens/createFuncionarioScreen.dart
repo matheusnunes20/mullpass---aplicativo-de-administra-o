@@ -21,8 +21,6 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
   final codigoController = TextEditingController();
 
   bool loading = false;
-
-  // 🔥 MÁSCARA CPF
   final cpfMask = MaskTextInputFormatter(
     mask: '###.###.###-##',
     filter: {"#": RegExp(r'[0-9]')},
@@ -60,8 +58,6 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
         );
 
       } else {
-        print('STATUS: ${response.statusCode}');
-        print('BODY: ${response.body}');
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Código inválido ou erro no cadastro')),
@@ -69,7 +65,6 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
       }
 
     } catch (e) {
-      print('ERRO: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro de conexão')),
@@ -100,7 +95,7 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true, // 🔥 evita overflow
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text('Cadastro Funcionário'),
         backgroundColor: Colors.black,
@@ -112,8 +107,6 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
 
             campo(nomeController, 'Nome'),
             campo(emailController, 'Email'),
-
-            // 🔥 CPF COM MÁSCARA + NUMÉRICO
             campo(
               documentoController,
               'CPF',
@@ -135,8 +128,6 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
             ),
 
             SizedBox(height: 10),
-
-            // 🔐 CÓDIGO DE ACESSO
             campo(codigoController, 'Código de acesso'),
 
             SizedBox(height: 20),

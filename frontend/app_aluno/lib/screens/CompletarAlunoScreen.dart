@@ -34,8 +34,6 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
   String horario = '18-19';
   String professor = 'caua';
   String sexo = 'feminino';
-
-  // 🔥 NOVO → PLANO
   int planoId = 1;
 
   final planos = {
@@ -63,15 +61,11 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
         'horario': horario,
         'professor': professor,
         'sexo': sexo,
-
-        // 🔥 ESSENCIAL
         'usuario_id': widget.usuarioId,
         'plano_id': planoId,
       };
 
-      print('BODY ENVIO: $body');
-
-      final response = await http.post(
+final response = await http.post(
         Uri.parse('http://10.0.2.2:3000/alunos/public'),
         headers: {
           'Content-Type': 'application/json',
@@ -79,10 +73,7 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
         body: jsonEncode(body),
       );
 
-      print('STATUS: ${response.statusCode}');
-      print('BODY: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
+if (response.statusCode == 200 || response.statusCode == 201) {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Cadastro completo com sucesso')),
@@ -103,7 +94,6 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
       }
 
     } catch (e) {
-      print('ERRO: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro de conexão')),
@@ -210,8 +200,6 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
             dropdown('Sexo', sexo, sexos, (v) {
               setState(() => sexo = v!);
             }),
-
-            // 🔥 NOVO → PLANO
             Padding(
               padding: EdgeInsets.only(bottom: 10),
               child: DropdownButtonFormField<int>(

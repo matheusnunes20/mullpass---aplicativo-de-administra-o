@@ -1,6 +1,22 @@
 import pool from '../src/db.js';
 
-// 🔥 BUSCAR ALUNO LOGADO (ESSENCIAL PRA TELA)
+// 🔥 LISTAR TODAS TURMAS
+export const listarTurmas = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, horario, limite
+      FROM turmas
+      ORDER BY horario
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao buscar turmas' });
+  }
+};
+
+// 🔥 MINHA TURMA
 export const minhaTurma = async (req, res) => {
   try {
     const usuarioId = parseInt(req.user.id);
@@ -15,18 +31,21 @@ export const minhaTurma = async (req, res) => {
     }
 
     res.json(result.rows[0]);
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ erro: 'Erro ao buscar aluno' });
   }
 };
 
-
 // 🔥 CONFIRMAR PRESENÇA
 export const confirmarPresenca = async (req, res) => {
   try {
     const usuarioId = parseInt(req.user.id);
+    const { turma_id } = req.body;
+
+    if (!turma_id) {
+      return res.status(400).json({ erro: 'Turma obrigatória' });
+    }
 
     const alunoResult = await pool.query(
       `SELECT id FROM alunos WHERE usuario_id = $1`,
@@ -39,60 +58,50 @@ export const confirmarPresenca = async (req, res) => {
 
     const alunoId = alunoResult.rows[0].id;
 
-    const turmaResult = await pool.query(`
-      SELECT t.id, t.limite
-      FROM inscricoes i
-      JOIN turmas t ON t.id = i.turma_id
-      WHERE i.aluno_id = $1
-      LIMIT 1
-    `, [alunoId]);
+    const turmaResult = await pool.query(
+      `SELECT id, limite FROM turmas WHERE id = $1`,
+      [turma_id]
+    );
 
     if (turmaResult.rows.length === 0) {
-      return res.status(400).json({ erro: 'Aluno não está em nenhuma turma' });
+      return res.status(400).json({ erro: 'Turma inválida' });
     }
 
     const turma = turmaResult.rows[0];
 
-    const existe = await pool.query(
-      `SELECT 1 FROM presencas 
-       WHERE aluno_id = $1 
+    await pool.query(
+      `DELETE FROM presencas
+       WHERE aluno_id = $1
        AND DATE(data) = CURRENT_DATE`,
       [alunoId]
     );
 
-    if (existe.rows.length > 0) {
-      return res.status(400).json({ erro: 'Já confirmou hoje' });
-    }
-
-    const count = await pool.query(`
-      SELECT COUNT(*) 
-      FROM presencas p
-      JOIN inscricoes i ON i.aluno_id = p.aluno_id
-      WHERE i.turma_id = $1
-      AND DATE(p.data) = CURRENT_DATE
-    `, [turma.id]);
+    const count = await pool.query(
+      `SELECT COUNT(DISTINCT aluno_id) FROM presencas
+       WHERE turma_id = $1
+       AND DATE(data) = CURRENT_DATE`,
+      [turma_id]
+    );
 
     const total = parseInt(count.rows[0].count);
 
     if (total >= turma.limite) {
-      return res.status(400).json({ erro: 'Turma completa' });
+      return res.status(400).json({ erro: 'Turma cheia' });
     }
 
     const result = await pool.query(
-      `INSERT INTO presencas (aluno_id, data)
-       VALUES ($1, NOW())
+      `INSERT INTO presencas (aluno_id, turma_id, data)
+       VALUES ($1, $2, NOW())
        RETURNING *`,
-      [alunoId]
+      [alunoId, turma_id]
     );
 
     res.status(201).json(result.rows[0]);
-
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao confirmar presença' });
+    console.error('ERRO REAL:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
-
 
 // 🔥 REMOVER PRESENÇA
 export const removerPresenca = async (req, res) => {
@@ -110,39 +119,139 @@ export const removerPresenca = async (req, res) => {
 
     const alunoId = alunoResult.rows[0].id;
 
-    await pool.query(
+    const result = await pool.query(
       `DELETE FROM presencas
        WHERE aluno_id = $1
-       AND DATE(data) = CURRENT_DATE`,
+       AND DATE(data) = CURRENT_DATE
+       RETURNING *`,
       [alunoId]
     );
 
-    res.json({ ok: true });
+    if (result.rows.length === 0) {
+      return res.status(400).json({ erro: 'Nenhuma presença hoje' });
+    }
 
+    res.json({ mensagem: 'Presença removida com sucesso' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ erro: 'Erro ao remover presença' });
   }
 };
 
-
-// 🔥 LISTAR POR TURMA (ADMIN)
+// 🔥 LISTAR PRESENÇA POR TURMA
 export const listarPresencaPorTurma = async (req, res) => {
   try {
     const { turma_id } = req.params;
 
     const result = await pool.query(`
-      SELECT a.nome, p.data
+      SELECT 
+        a.id,
+        a.nome,
+        a.telefone,
+        p.data
       FROM presencas p
       JOIN alunos a ON a.id = p.aluno_id
-      JOIN inscricoes i ON i.aluno_id = a.id
-      WHERE i.turma_id = $1
+      WHERE p.turma_id = $1
       AND DATE(p.data) = CURRENT_DATE
+      ORDER BY a.nome
     `, [turma_id]);
 
     res.json(result.rows);
-
   } catch (err) {
+    console.error(err);
     res.status(500).json({ erro: 'Erro ao listar presença' });
+  }
+};
+
+// 🔥 PRESENÇA DE HOJE
+export const minhaPresencaHoje = async (req, res) => {
+  try {
+    const usuarioId = parseInt(req.user.id);
+
+    const alunoResult = await pool.query(
+      `SELECT id FROM alunos WHERE usuario_id = $1`,
+      [usuarioId]
+    );
+
+    if (alunoResult.rows.length === 0) {
+      return res.json(null);
+    }
+
+    const alunoId = alunoResult.rows[0].id;
+
+    const result = await pool.query(`
+      SELECT t.id, t.horario
+      FROM presencas p
+      JOIN turmas t ON t.id = p.turma_id
+      WHERE p.aluno_id = $1
+      AND DATE(p.data) = CURRENT_DATE
+      LIMIT 1
+    `, [alunoId]);
+
+    if (result.rows.length === 0) {
+      return res.json(null);
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao buscar presença' });
+  }
+};
+
+// 🔥 HISTÓRICO DO PRÓPRIO ALUNO
+export const meuHistorico = async (req, res) => {
+  try {
+    const usuarioId = parseInt(req.user.id);
+
+    const alunoResult = await pool.query(
+      `SELECT id FROM alunos WHERE usuario_id = $1`,
+      [usuarioId]
+    );
+
+    if (alunoResult.rows.length === 0) {
+      return res.json([]);
+    }
+
+    const alunoId = alunoResult.rows[0].id;
+
+    const result = await pool.query(`
+      SELECT 
+        p.id,
+        p.data,
+        t.horario
+      FROM presencas p
+      JOIN turmas t ON t.id = p.turma_id
+      WHERE p.aluno_id = $1
+      ORDER BY p.data DESC
+    `, [alunoId]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao buscar histórico' });
+  }
+};
+
+// 🔥 HISTÓRICO DE QUALQUER ALUNO
+export const historicoPorAluno = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(`
+      SELECT 
+        p.id,
+        p.data,
+        t.horario
+      FROM presencas p
+      JOIN turmas t ON t.id = p.turma_id
+      WHERE p.aluno_id = $1
+      ORDER BY p.data DESC
+    `, [id]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao buscar histórico do aluno' });
   }
 };

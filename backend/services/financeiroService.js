@@ -1,12 +1,6 @@
 import pool from '../src/db.js';
-
-
-// 🔥 GERAR MENSALIDADES AUTOMATICAMENTE (TODO MÊS)
 export const gerarMensalidades = async () => {
   try {
-    console.log('💰 Iniciando geração de mensalidades...');
-
-    // 🔥 pega todos alunos com plano
     const alunos = await pool.query(`
       SELECT a.id, p.preco
       FROM alunos a
@@ -14,8 +8,6 @@ export const gerarMensalidades = async () => {
     `);
 
     for (const aluno of alunos.rows) {
-
-      // 🔥 verifica se já existe mensalidade no mês atual
       const existe = await pool.query(`
         SELECT 1 FROM mensalidades
         WHERE aluno_id = $1
@@ -37,16 +29,11 @@ export const gerarMensalidades = async () => {
           )
         `, [aluno.id, aluno.preco]);
 
-        console.log(`✔ Mensalidade criada para aluno ${aluno.id}`);
-
-      } else {
-        console.log(`⚠ Já existe mensalidade para aluno ${aluno.id}`);
+} else {
       }
     }
 
-    console.log('✅ Processo finalizado');
-
-  } catch (err) {
+} catch (err) {
     console.error('💥 ERRO AO GERAR MENSALIDADES:', err);
   }
 };

@@ -21,7 +21,7 @@ class TimeRangeInput extends StatelessWidget {
         keyboardType: TextInputType.number,
         inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(2), // 🔥 limita até 2 dígitos (ex: 18)
+          LengthLimitingTextInputFormatter(2),
         ],
         decoration: InputDecoration(
           prefixIcon: icon != null ? Icon(icon) : null,

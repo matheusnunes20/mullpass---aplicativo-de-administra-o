@@ -43,8 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
-
-        // 🔥 BUSCAR USUÁRIO
         final userResponse = await http.get(
           Uri.parse('http://10.0.2.2:3000/usuarios/me'),
           headers: {
@@ -58,19 +56,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final user = jsonDecode(userResponse.body);
 
-        print('🔥 USER LOGADO: $user');
-
-        // 🔥 SALVAR TOKEN
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
-
-        // 🔥 AQUI FOI A CORREÇÃO PRINCIPAL
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => DashboardScreen(
               token: token,
-              user: user, // 👈 AGORA VAI COMPLETO
+              user: user,
             ),
           ),
         );
@@ -80,7 +73,6 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-      print('ERRO REAL: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao conectar com servidor')),

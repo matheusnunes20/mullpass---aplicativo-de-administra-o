@@ -1,7 +1,4 @@
 import pool from '../src/db.js';
-
-
-// 🔥 FINANCEIRO DO ALUNO LOGADO
 export const meuFinanceiro = async (req, res) => {
   try {
     const aluno = await pool.query(
@@ -68,10 +65,6 @@ export const meuFinanceiro = async (req, res) => {
     res.status(500).send('Erro ao buscar financeiro');
   }
 };
-
-
-
-// 🔥 LISTAR FINANCEIRO (ADMIN) — CORRIGIDO
 export const listarFinanceiroAlunos = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -114,10 +107,6 @@ export const listarFinanceiroAlunos = async (req, res) => {
     res.status(500).send('Erro ao listar financeiro');
   }
 };
-
-
-
-// 🔥 PAGAR MENSALIDADE
 export const pagarMensalidade = async (req, res) => {
   try {
     const { id } = req.params;
@@ -152,10 +141,6 @@ export const pagarMensalidade = async (req, res) => {
     res.status(500).send('Erro ao pagar mensalidade');
   }
 };
-
-
-
-// 🔥 CRIAR MENSALIDADE (SEM DUPLICAR)
 export const criarMensalidade = async (req, res) => {
   try {
     const { aluno_id, data_vencimento } = req.body;
@@ -197,10 +182,6 @@ export const criarMensalidade = async (req, res) => {
     res.status(500).send('Erro ao criar mensalidade');
   }
 };
-
-
-
-// 🔥 HISTÓRICO
 export const historicoAluno = async (req, res) => {
   try {
     const { id } = req.params;

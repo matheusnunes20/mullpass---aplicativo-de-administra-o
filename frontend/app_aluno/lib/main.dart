@@ -18,10 +18,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Arena Mull Beach',
-
-      // 🎨 TEMA PERSONALIZADO
       theme: ThemeData(
-        primaryColor: Color(0xFFFFC107), // amarelo
+        primaryColor: Color(0xFFFFC107),
         scaffoldBackgroundColor: Colors.grey[100],
 
         appBarTheme: AppBarTheme(
@@ -52,7 +50,6 @@ class MyApp extends StatelessWidget {
       home: FutureBuilder<String?>(
         future: getToken(),
         builder: (context, snapshot) {
-          // 🔄 LOADING PERSONALIZADO
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Scaffold(
               body: Center(
@@ -62,13 +59,9 @@ class MyApp extends StatelessWidget {
               ),
             );
           }
-
-          // 🔐 AUTO LOGIN
           if (snapshot.hasData && snapshot.data != null) {
             return HomeScreen(token: snapshot.data!);
           }
-
-          // 🔓 LOGIN
           return LoginScreen();
         },
       ),

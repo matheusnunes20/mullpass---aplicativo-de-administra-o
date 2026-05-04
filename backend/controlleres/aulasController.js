@@ -1,6 +1,4 @@
 import pool from '../src/db.js';
-
-// 🔥 CRIAR
 export const criarAula = async (req, res) => {
   try {
     const { data, horario, professor, modalidade } = req.body;
@@ -23,8 +21,6 @@ export const criarAula = async (req, res) => {
     res.status(500).send('Erro ao criar aula');
   }
 };
-
-// 🔥 LISTAR
 export const listarAulas = async (req, res) => {
   try {
     const result = await pool.query(
@@ -38,8 +34,6 @@ export const listarAulas = async (req, res) => {
     res.status(500).send('Erro ao listar aulas');
   }
 };
-
-// 🔥 DELETAR
 export const deletarAula = async (req, res) => {
   try {
     const { id } = req.params;

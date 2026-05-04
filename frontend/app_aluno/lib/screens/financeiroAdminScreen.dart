@@ -41,7 +41,6 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
         setState(() => loading = false);
       }
     } catch (e) {
-      print('Erro financeiro admin: $e');
       setState(() => loading = false);
     }
   }
@@ -64,7 +63,6 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
         );
       }
     } catch (e) {
-      print('Erro ao pagar: $e');
     }
   }
 

@@ -1,6 +1,4 @@
 import pool from '../src/db.js';
-
-// 🔥 LISTAR
 export const listarAlunos = async (req, res) => {
   try {
     const alunos = await pool.query('SELECT * FROM alunos');
@@ -10,9 +8,6 @@ export const listarAlunos = async (req, res) => {
     res.status(500).send('Erro ao listar alunos');
   }
 };
-
-
-// 🔥 CRIAR ALUNO + INSCRIÇÃO + FINANCEIRO (VERSÃO FINAL)
 export const criarAluno = async (req, res) => {
   try {
     const {
@@ -30,9 +25,6 @@ export const criarAluno = async (req, res) => {
       plano_id
     } = req.body;
 
-    console.log('📥 RECEBIDO:', req.body);
-
-    // 🔒 VALIDAÇÕES
     if (!nome || !usuario_id) {
       return res.status(400).json({ erro: 'Nome e usuário são obrigatórios' });
     }
@@ -44,8 +36,6 @@ export const criarAluno = async (req, res) => {
     if (!plano_id) {
       return res.status(400).json({ erro: 'Plano obrigatório' });
     }
-
-    // 🔥 BUSCA PLANO
     const plano = await pool.query(
       'SELECT preco FROM planos WHERE id = $1',
       [plano_id]
@@ -56,8 +46,6 @@ export const criarAluno = async (req, res) => {
     }
 
     const valorPlano = plano.rows[0].preco;
-
-    // 🔥 FORMATA HORÁRIO
     let horarioFormatado = horario;
 
     if (!horario.includes(':')) {
@@ -70,9 +58,6 @@ export const criarAluno = async (req, res) => {
       horarioFormatado = `${partes[0]}:00-${partes[1]}:00`;
     }
 
-    console.log('🕒 FORMATADO:', horarioFormatado);
-
-    // 🔥 CRIA ALUNO
     const result = await pool.query(
       `INSERT INTO alunos 
       (nome, telefone, email, documento, endereco, modalidade, dia_semana, horario, professor, sexo, usuario_id, plano_id)
@@ -95,8 +80,6 @@ export const criarAluno = async (req, res) => {
     );
 
     const aluno = result.rows[0];
-
-    // 🔥 BUSCA TURMA (COMPATÍVEL COM SUA TABELA)
     const turmaResult = await pool.query(
       `SELECT id, limite 
        FROM turmas 
@@ -112,8 +95,6 @@ export const criarAluno = async (req, res) => {
     }
 
     const turma = turmaResult.rows[0];
-
-    // 🔥 EVITA DUPLICAÇÃO DE INSCRIÇÃO
     const jaInscrito = await pool.query(
       `SELECT 1 FROM inscricoes WHERE aluno_id = $1`,
       [aluno.id]
@@ -138,12 +119,8 @@ export const criarAluno = async (req, res) => {
         [aluno.id, turma.id]
       );
 
-      console.log('✅ INSCRIÇÃO CRIADA');
     } else {
-      console.log('⚠️ Já inscrito');
     }
-
-    // 🔥 💰 CRIAR MENSALIDADE (SEM DUPLICAR)
     const existeMensalidade = await pool.query(
       `SELECT 1 FROM mensalidades 
        WHERE aluno_id = $1 
@@ -158,9 +135,7 @@ export const criarAluno = async (req, res) => {
         [aluno.id, valorPlano]
       );
 
-      console.log('💰 Mensalidade criada');
     } else {
-      console.log('⚠️ Mensalidade já existe');
     }
 
     res.status(201).json(aluno);
@@ -170,9 +145,6 @@ export const criarAluno = async (req, res) => {
     res.status(500).json({ erro: err.message });
   }
 };
-
-
-// 🔥 ATUALIZAR
 export const atualizarAluno = async (req, res) => {
   try {
     const { id } = req.params;
@@ -208,8 +180,27 @@ export const atualizarAluno = async (req, res) => {
   }
 };
 
+export const buscarAlunoPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-// 🔥 DELETAR
+    const result = await pool.query(
+      `SELECT * FROM alunos WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ erro: 'Aluno não encontrado' });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ erro: 'Erro ao buscar aluno' });
+  }
+};
+
 export const deletarAluno = async (req, res) => {
   try {
     const { id } = req.params;

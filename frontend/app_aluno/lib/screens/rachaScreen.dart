@@ -38,7 +38,6 @@ class _RachaScreenState extends State<RachaScreen> {
         });
       }
     } catch (e) {
-      print(e);
     }
   }
 
@@ -185,8 +184,6 @@ class _RachaScreenState extends State<RachaScreen> {
                         ),
                       );
                     },
-
-                    // 🔥 AQUI ESTÁ O BOTÃO QUE VOCÊ QUER
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

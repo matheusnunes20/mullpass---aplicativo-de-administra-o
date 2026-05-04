@@ -4,8 +4,7 @@ import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-
-// 🔥 LISTAR TODAS AS TURMAS COM VAGAS
+// LISTAR TODAS AS TURMAS
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -14,9 +13,11 @@ router.get('/', authMiddleware, async (req, res) => {
         t.horario,
         t.limite,
         t.tipo,
-        COALESCE(COUNT(i.id), 0) as ocupadas
+        COALESCE(COUNT(DISTINCT p.aluno_id), 0) as ocupadas
       FROM turmas t
-      LEFT JOIN inscricoes i ON i.turma_id = t.id
+      LEFT JOIN presencas p 
+        ON p.turma_id = t.id
+        AND DATE(p.data) = CURRENT_DATE
       GROUP BY t.id
       ORDER BY t.horario
     `);
@@ -59,8 +60,7 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-
-// 🔥 BUSCAR TURMA POR ID (COM VAGAS)
+// BUSCAR TURMA POR ID
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -71,9 +71,11 @@ router.get('/:id', authMiddleware, async (req, res) => {
         t.horario,
         t.limite,
         t.tipo,
-        COALESCE(COUNT(i.id), 0) as ocupadas
+        COALESCE(COUNT(DISTINCT p.aluno_id), 0) as ocupadas
       FROM turmas t
-      LEFT JOIN inscricoes i ON i.turma_id = t.id
+      LEFT JOIN presencas p 
+        ON p.turma_id = t.id
+        AND DATE(p.data) = CURRENT_DATE
       WHERE t.id = $1
       GROUP BY t.id
     `, [id]);
@@ -101,8 +103,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-
-// 🔥 LISTAR ALUNOS DA TURMA
+// LISTAR ALUNOS DA TURMA
 router.get('/:id/alunos', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -112,9 +113,10 @@ router.get('/:id/alunos', authMiddleware, async (req, res) => {
         a.id,
         a.nome,
         a.telefone
-      FROM inscricoes i
-      JOIN alunos a ON a.id = i.aluno_id
-      WHERE i.turma_id = $1
+      FROM presencas p
+      JOIN alunos a ON a.id = p.aluno_id
+      WHERE p.turma_id = $1
+      AND DATE(p.data) = CURRENT_DATE
       ORDER BY a.nome
     `, [id]);
 
@@ -125,6 +127,5 @@ router.get('/:id/alunos', authMiddleware, async (req, res) => {
     res.status(500).json({ erro: 'Erro ao buscar alunos da turma' });
   }
 });
-
 
 export default router;

@@ -13,13 +13,11 @@ export const authMiddleware = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = {
-      id: parseInt(decoded.id || decoded.usuario_id), // 🔥 CORREÇÃO
+      id: parseInt(decoded.id || decoded.usuario_id),
       tipo: decoded.tipo
     };
 
-    console.log('USER LOGADO:', req.user); // 🔥 antes do next
-
-    next();
+next();
 
   } catch (err) {
     return res.status(401).send('Token inválido');

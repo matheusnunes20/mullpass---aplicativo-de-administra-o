@@ -3,21 +3,27 @@ import {
   confirmarPresenca,
   removerPresenca,
   listarPresencaPorTurma,
-  minhaTurma
+  listarTurmas,
+  minhaTurma,
+  minhaPresencaHoje,
+  meuHistorico,
+  historicoPorAluno
 } from '../controlleres/presencasController.js';
 
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// 🔥 ESSENCIAL PRA TELA
+router.get('/turmas', authMiddleware, listarTurmas);
 router.get('/minha-turma', authMiddleware, minhaTurma);
 
-// 🔥 PRESENÇA
 router.post('/confirmar', authMiddleware, confirmarPresenca);
 router.delete('/remover', authMiddleware, removerPresenca);
 
-// 🔥 ADMIN
+
 router.get('/turma/:turma_id', authMiddleware, listarPresencaPorTurma);
+router.get('/hoje', authMiddleware, minhaPresencaHoje);
+router.get('/historico', authMiddleware, meuHistorico);
+router.get('/aluno/:id/historico', authMiddleware, historicoPorAluno);
 
 export default router;

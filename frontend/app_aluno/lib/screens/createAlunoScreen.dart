@@ -47,18 +47,13 @@ class _CreateAlunoScreenState extends State<CreateAlunoScreen> {
         }),
       );
 
-      print('STATUS: ${response.statusCode}');
-      print('BODY: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
+if (response.statusCode == 200 || response.statusCode == 201) {
 
         final user = jsonDecode(response.body);
 
         final int usuarioId = user['id'] is int
             ? user['id']
             : int.parse(user['id'].toString());
-
-        // 🔥 VAI PRA TELA 2 (COMPLETAR)
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -79,7 +74,6 @@ class _CreateAlunoScreenState extends State<CreateAlunoScreen> {
       }
 
     } catch (e) {
-      print('ERRO: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro de conexão')),

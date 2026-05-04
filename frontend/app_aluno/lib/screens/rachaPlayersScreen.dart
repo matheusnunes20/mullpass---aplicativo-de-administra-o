@@ -48,8 +48,6 @@ class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
       ),
       body: Column(
         children: [
-
-          // 🔥 HEADER COM CONTADOR
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(15),
@@ -59,8 +57,6 @@ class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
-
-          // 🔥 LISTA
           Expanded(
             child: ListView.builder(
               itemCount: jogadores.length,

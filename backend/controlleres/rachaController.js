@@ -1,10 +1,6 @@
 import pool from '../src/db.js';
-
-
-// 🔥 CRIAR RACHA (AJUSTADO PARA USAR COLUNA "hora")
 export const criarRacha = async (req, res) => {
   try {
-    console.log('USER DEBUG:', req.user);
 
     const userId = req.user?.id || req.user?.usuario_id;
 
@@ -17,8 +13,6 @@ export const criarRacha = async (req, res) => {
     if (!data || !hora_inicio || !hora_fim || !local || !quadra || !limite || !tipo) {
       return res.status(400).send('Campos obrigatórios faltando');
     }
-
-    // 🔥 FORMATA PARA STRING (EX: 18:00 - 23:00)
     const horaInicioFormatada = hora_inicio.includes(':')
       ? hora_inicio
       : `${hora_inicio}:00`;
@@ -36,7 +30,7 @@ export const criarRacha = async (req, res) => {
        RETURNING *`,
       [
         data,
-        horaFinal, // 🔥 AGORA USA "hora"
+        horaFinal,
         local,
         quadra,
         limite,
@@ -52,9 +46,6 @@ export const criarRacha = async (req, res) => {
     res.status(500).send('Erro ao criar racha');
   }
 };
-
-
-// 🔥 LISTAR RACHAS (AJUSTADO PARA "hora")
 export const listarRachas = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -78,9 +69,6 @@ export const listarRachas = async (req, res) => {
     res.status(500).send('Erro ao listar rachas');
   }
 };
-
-
-// 🔥 LISTAR JOGADORES
 export const listarJogadoresRacha = async (req, res) => {
   try {
     const { id } = req.params;
@@ -100,9 +88,6 @@ export const listarJogadoresRacha = async (req, res) => {
     res.status(500).send('Erro ao buscar jogadores');
   }
 };
-
-
-// 🔥 ENTRAR NO RACHA
 export const entrarRacha = async (req, res) => {
   try {
     const { racha_id } = req.body;
@@ -174,7 +159,6 @@ export const entrarRacha = async (req, res) => {
   }
 };
 
-
 export const deletarRacha = async (req, res) => {
   try {
     const { id } = req.params;
@@ -195,8 +179,6 @@ export const deletarRacha = async (req, res) => {
     if (!racha) {
       return res.status(404).send('Racha não encontrado');
     }
-
-    // 🔥 CORREÇÃO AQUI
     if (
       racha.criado_por.toString() !== userId.toString() &&
       req.user.tipo !== 'admin'

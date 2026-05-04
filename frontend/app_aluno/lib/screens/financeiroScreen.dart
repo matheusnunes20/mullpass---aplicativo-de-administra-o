@@ -29,9 +29,7 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
-      print('RESPOSTA BACKEND: ${res.body}');
-
-      if (res.statusCode == 200) {
+if (res.statusCode == 200) {
         final json = jsonDecode(res.body);
 
         setState(() {
@@ -42,7 +40,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
         setState(() => loading = false);
       }
     } catch (e) {
-      print('Erro: $e');
       setState(() => loading = false);
     }
   }

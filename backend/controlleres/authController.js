@@ -3,9 +3,6 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const SECRET = process.env.JWT_SECRET;
-
-
-// 🔥 REGISTER
 export const register = async (req, res) => {
   try {
 
@@ -18,8 +15,6 @@ export const register = async (req, res) => {
     if (!tiposValidos.includes(tipoFinal)) {
       return res.status(400).send('Tipo de usuário inválido');
     }
-
-    // 🔐 VALIDAÇÃO FUNCIONÁRIO
     if (tipoFinal === 'funcionario') {
       if (codigo !== 'ARENAMULLBEACH') {
         return res.status(403).json({ erro: 'Código inválido' });
@@ -52,8 +47,6 @@ export const register = async (req, res) => {
     res.status(500).send('Erro no cadastro');
   }
 };
-
-// 🔥 LOGIN
 export const login = async (req, res) => {
   try {
     const loginInput = req.body.login || req.body.email;

@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'loginScreen.dart';
 import 'dart:convert';
 import 'createAlunoScreen.dart';
-import 'alunoDetalheScreen.dart'; // 🔥 NOVO IMPORT
+import 'alunoDetalheScreen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String token;
@@ -41,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      print('Erro usuário: $e');
     }
   }
 
@@ -60,7 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      print('Erro conexão: $e');
     }
   }
 
@@ -105,13 +103,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: ListTile(
-                    // 🔥 AGORA CLICÁVEL
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => AlunoDetalheScreen(
-                            alunoId: int.parse(aluno['id'].toString()), // ✅ CORRETO
+                            alunoId: int.parse(aluno['id'].toString()),
                             token: widget.token,
                           ),
                         ),
@@ -137,7 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? IconButton(
                             icon: Icon(Icons.delete, color: Colors.red),
                             onPressed: () {
-                              print('Deletar aluno');
                             },
                           )
                         : null,
