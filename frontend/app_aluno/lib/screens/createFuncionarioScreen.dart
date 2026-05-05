@@ -13,6 +13,10 @@ class CreateFuncionarioScreen extends StatefulWidget {
 
 class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
 
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   final nomeController = TextEditingController();
   final emailController = TextEditingController();
   final documentoController = TextEditingController();
@@ -21,6 +25,7 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
   final codigoController = TextEditingController();
 
   bool loading = false;
+
   final cpfMask = MaskTextInputFormatter(
     mask: '###.###.###-##',
     filter: {"#": RegExp(r'[0-9]')},
@@ -31,17 +36,20 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/auth/register'),
+        Uri.parse('$baseUrl/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email': emailController.text,
-          'senha': senhaController.text,
-          'username': usernameController.text,
-          'documento': documentoController.text,
+          'email': emailController.text.trim(),
+          'senha': senhaController.text.trim(),
+          'username': usernameController.text.trim(),
+          'documento': documentoController.text.trim(),
           'tipo': 'funcionario',
-          'codigo': codigoController.text,
+          'codigo': codigoController.text.trim(),
         }),
       );
+
+      print('FUNC STATUS: ${response.statusCode}');
+      print('FUNC BODY: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
 
@@ -65,6 +73,7 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
       }
 
     } catch (e) {
+      print('ERRO FUNC: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro de conexão')),
@@ -107,6 +116,7 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
 
             campo(nomeController, 'Nome'),
             campo(emailController, 'Email'),
+
             campo(
               documentoController,
               'CPF',
@@ -128,6 +138,7 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
             ),
 
             SizedBox(height: 10),
+
             campo(codigoController, 'Código de acesso'),
 
             SizedBox(height: 20),

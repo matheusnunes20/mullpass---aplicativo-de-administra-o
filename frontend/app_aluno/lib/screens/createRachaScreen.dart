@@ -15,6 +15,11 @@ class CreateRachaScreen extends StatefulWidget {
 }
 
 class _CreateRachaScreenState extends State<CreateRachaScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   final dataController = TextEditingController();
   final localController = TextEditingController();
   final limiteController = TextEditingController();
@@ -41,7 +46,7 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas'),
+        Uri.parse('$baseUrl/rachas'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -52,10 +57,13 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
           'hora_fim': horaFimController.text,
           'local': localController.text,
           'quadra': quadra,
-          'limite': int.parse(limiteController.text),
+          'limite': int.tryParse(limiteController.text) ?? 0,
           'tipo': tipo,
         }),
       );
+
+      print('RACHA STATUS: ${response.statusCode}');
+      print('RACHA BODY: ${response.body}');
 
       setState(() => loading = false);
 
@@ -70,7 +78,10 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
         );
       }
     } catch (e) {
+      print('ERRO RACHA: $e');
+
       setState(() => loading = false);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erro ao criar racha')),
       );
@@ -200,18 +211,9 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
                       value: quadra,
                       icon: Icons.sports_volleyball,
                       items: const [
-                        DropdownMenuItem(
-                          value: 'Quadra 1',
-                          child: Text('Quadra 1'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Quadra 2',
-                          child: Text('Quadra 2'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Quadra 3',
-                          child: Text('Quadra 3'),
-                        ),
+                        DropdownMenuItem(value: 'Quadra 1', child: Text('Quadra 1')),
+                        DropdownMenuItem(value: 'Quadra 2', child: Text('Quadra 2')),
+                        DropdownMenuItem(value: 'Quadra 3', child: Text('Quadra 3')),
                       ],
                       onChanged: (value) {
                         setState(() => quadra = value!);
@@ -230,14 +232,8 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
                       value: tipo,
                       icon: Icons.group,
                       items: const [
-                        DropdownMenuItem(
-                          value: 'misto',
-                          child: Text('Misto'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'feminino',
-                          child: Text('Somente feminino'),
-                        ),
+                        DropdownMenuItem(value: 'misto', child: Text('Misto')),
+                        DropdownMenuItem(value: 'feminino', child: Text('Somente feminino')),
                       ],
                       onChanged: (value) {
                         setState(() => tipo = value!);

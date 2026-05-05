@@ -16,6 +16,10 @@ class _AlunoDetalheScreenState extends State<AlunoDetalheScreen> {
   Map aluno = {};
   bool loading = true;
 
+  // ✅ BASE URL CENTRALIZADA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   @override
   void initState() {
     super.initState();
@@ -25,7 +29,7 @@ class _AlunoDetalheScreenState extends State<AlunoDetalheScreen> {
   Future<void> carregarDados() async {
     try {
       final res = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/alunos/${widget.alunoId}'),
+        Uri.parse('$baseUrl/alunos/${widget.alunoId}'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
@@ -53,9 +57,10 @@ class _AlunoDetalheScreenState extends State<AlunoDetalheScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: TextStyle(color: Colors.grey)),
-          Text(value,
-              style:
-                  TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
@@ -81,8 +86,9 @@ class _AlunoDetalheScreenState extends State<AlunoDetalheScreen> {
                       Text(
                         aluno['nome'] ?? '',
                         style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       SizedBox(height: 20),
 

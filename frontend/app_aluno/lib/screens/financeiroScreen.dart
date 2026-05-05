@@ -13,6 +13,11 @@ class FinanceiroScreen extends StatefulWidget {
 }
 
 class _FinanceiroScreenState extends State<FinanceiroScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   Map<String, dynamic>? dados;
   bool loading = true;
 
@@ -25,11 +30,14 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
   Future<void> carregar() async {
     try {
       final res = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/financeiro/me'),
+        Uri.parse('$baseUrl/financeiro/me'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
-if (res.statusCode == 200) {
+      print('FIN USER STATUS: ${res.statusCode}');
+      print('FIN USER BODY: ${res.body}');
+
+      if (res.statusCode == 200) {
         final json = jsonDecode(res.body);
 
         setState(() {
@@ -40,6 +48,7 @@ if (res.statusCode == 200) {
         setState(() => loading = false);
       }
     } catch (e) {
+      print('ERRO FIN USER: $e');
       setState(() => loading = false);
     }
   }

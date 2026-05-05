@@ -18,6 +18,11 @@ class RachaPlayersScreen extends StatefulWidget {
 }
 
 class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   List jogadores = [];
 
   @override
@@ -27,16 +32,25 @@ class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
   }
 
   Future<void> buscarJogadores() async {
-    final response = await http.get(
-      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas/${widget.rachaId}/jogadores'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/rachas/${widget.rachaId}/jogadores'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
 
-    setState(() {
-      jogadores = jsonDecode(response.body);
-    });
+      print('PLAYERS STATUS: ${response.statusCode}');
+      print('PLAYERS BODY: ${response.body}');
+
+      if (response.statusCode == 200) {
+        setState(() {
+          jogadores = jsonDecode(response.body);
+        });
+      }
+    } catch (e) {
+      print('ERRO PLAYERS: $e');
+    }
   }
 
   @override
@@ -57,11 +71,13 @@ class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
+
           Expanded(
             child: ListView.builder(
               itemCount: jogadores.length,
               itemBuilder: (_, i) {
                 final j = jogadores[i];
+                final nome = j['nome']?.toString() ?? '-';
 
                 return Card(
                   margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -69,11 +85,11 @@ class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
                     leading: CircleAvatar(
                       backgroundColor: Colors.amber,
                       child: Text(
-                        j['nome'][0],
+                        nome.isNotEmpty ? nome[0] : '?',
                         style: TextStyle(color: Colors.black),
                       ),
                     ),
-                    title: Text(j['nome']),
+                    title: Text(nome),
                     subtitle: Text(j['telefone'] ?? ''),
                   ),
                 );

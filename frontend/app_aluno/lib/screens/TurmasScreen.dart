@@ -13,6 +13,11 @@ class TurmasScreen extends StatefulWidget {
 }
 
 class _TurmasScreenState extends State<TurmasScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   List turmas = [];
   Map? minhaTurma;
   Map user = {};
@@ -28,9 +33,12 @@ class _TurmasScreenState extends State<TurmasScreen> {
   Future<void> buscarUsuario() async {
     try {
       final response = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/usuarios/me'),
+        Uri.parse('$baseUrl/usuarios/me'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
+
+      print('USER STATUS: ${response.statusCode}');
+      print('USER BODY: ${response.body}');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -38,20 +46,24 @@ class _TurmasScreenState extends State<TurmasScreen> {
         });
       }
     } catch (e) {
+      print('ERRO USER: $e');
     }
   }
 
   Future<void> carregarDados() async {
     try {
       final turmasRes = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/turmas'),
+        Uri.parse('$baseUrl/turmas'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
       final minhaRes = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/inscricoes/me'),
+        Uri.parse('$baseUrl/inscricoes/me'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
+
+      print('TURMAS STATUS: ${turmasRes.statusCode}');
+      print('TURMAS BODY: ${turmasRes.body}');
 
       final data = jsonDecode(turmasRes.body);
 
@@ -67,14 +79,15 @@ class _TurmasScreenState extends State<TurmasScreen> {
         loading = false;
       });
     } catch (e) {
+      print('ERRO TURMAS: $e');
       setState(() => loading = false);
     }
   }
 
   Future<void> entrarNaTurma(int turmaId) async {
     try {
-      await http.post(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/inscricoes'),
+      final res = await http.post(
+        Uri.parse('$baseUrl/inscricoes'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json'
@@ -84,13 +97,17 @@ class _TurmasScreenState extends State<TurmasScreen> {
         }),
       );
 
+      print('ENTRAR TURMA STATUS: ${res.statusCode}');
+      print('ENTRAR TURMA BODY: ${res.body}');
+
       carregarDados();
     } catch (e) {
+      print('ERRO ENTRAR TURMA: $e');
     }
   }
 
   Widget cardTurma(Map turma) {
-    final bool lotada = turma['lotada'];
+    final bool lotada = turma['lotada'] ?? false;
     final bool minha = minhaTurma != null && minhaTurma!['id'] == turma['id'];
 
     final bool isFuncionario =
@@ -100,7 +117,7 @@ class _TurmasScreenState extends State<TurmasScreen> {
       margin: EdgeInsets.only(bottom: 12),
       child: ListTile(
         title: Text(
-          turma['horario'],
+          turma['horario'] ?? '-',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(

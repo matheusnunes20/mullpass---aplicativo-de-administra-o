@@ -12,6 +12,10 @@ class CreateAlunoScreen extends StatefulWidget {
 
 class _CreateAlunoScreenState extends State<CreateAlunoScreen> {
 
+  // ✅ BASE URL CENTRALIZADA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   final nomeController = TextEditingController();
   final telefoneController = TextEditingController();
   final emailController = TextEditingController();
@@ -36,7 +40,7 @@ class _CreateAlunoScreenState extends State<CreateAlunoScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/auth/register'),
+        Uri.parse('$baseUrl/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': emailController.text.trim(),
@@ -47,13 +51,17 @@ class _CreateAlunoScreenState extends State<CreateAlunoScreen> {
         }),
       );
 
-if (response.statusCode == 200 || response.statusCode == 201) {
+      print('REGISTER STATUS: ${response.statusCode}');
+      print('REGISTER BODY: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
 
         final user = jsonDecode(response.body);
 
         final int usuarioId = user['id'] is int
             ? user['id']
             : int.parse(user['id'].toString());
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -74,6 +82,7 @@ if (response.statusCode == 200 || response.statusCode == 201) {
       }
 
     } catch (e) {
+      print('ERRO REGISTER: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro de conexão')),

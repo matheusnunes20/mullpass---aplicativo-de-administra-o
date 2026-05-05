@@ -12,6 +12,11 @@ class CreateAulaScreen extends StatefulWidget {
 }
 
 class _CreateAulaScreenState extends State<CreateAulaScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   final dataController = TextEditingController();
   final horarioController = TextEditingController();
   final professorController = TextEditingController();
@@ -31,30 +36,43 @@ class _CreateAulaScreenState extends State<CreateAulaScreen> {
 
     setState(() => loading = true);
 
-    final response = await http.post(
-      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/aulas'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json'
-      },
-      body: jsonEncode({
-        'data': dataController.text,
-        'horario': horarioController.text,
-        'professor': professorController.text,
-        'modalidade': modalidadeController.text,
-      }),
-    );
-
-    setState(() => loading = false);
-
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Aula criada')),
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/aulas'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json'
+        },
+        body: jsonEncode({
+          'data': dataController.text,
+          'horario': horarioController.text,
+          'professor': professorController.text,
+          'modalidade': modalidadeController.text,
+        }),
       );
-      Navigator.pop(context);
-    } else {
+
+      print('AULA STATUS: ${response.statusCode}');
+      print('AULA BODY: ${response.body}');
+
+      setState(() => loading = false);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Aula criada')),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.body)),
+        );
+      }
+    } catch (e) {
+      print('ERRO AULA: $e');
+
+      setState(() => loading = false);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.body)),
+        SnackBar(content: Text('Erro de conexão')),
       );
     }
   }
@@ -90,7 +108,7 @@ class _CreateAulaScreenState extends State<CreateAulaScreen> {
             ElevatedButton(
               onPressed: loading ? null : criarAula,
               child: loading
-                  ? CircularProgressIndicator()
+                  ? CircularProgressIndicator(color: Colors.white)
                   : Text('Salvar'),
             )
           ],

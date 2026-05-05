@@ -12,6 +12,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   final emailController = TextEditingController();
   final senhaController = TextEditingController();
 
@@ -32,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/auth/login'),
+        Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'login': loginInput,
@@ -40,15 +45,22 @@ class _LoginScreenState extends State<LoginScreen> {
         }),
       );
 
+      print('LOGIN STATUS: ${response.statusCode}');
+      print('LOGIN BODY: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
+
         final userResponse = await http.get(
-          Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/usuarios/me'),
+          Uri.parse('$baseUrl/usuarios/me'),
           headers: {
             'Authorization': 'Bearer $token',
           },
         );
+
+        print('USER STATUS: ${userResponse.statusCode}');
+        print('USER BODY: ${userResponse.body}');
 
         if (userResponse.statusCode != 200) {
           throw Exception('Erro ao buscar usuário');
@@ -58,6 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -67,12 +80,14 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         );
+
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login inválido')),
         );
       }
     } catch (e) {
+      print('ERRO LOGIN: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao conectar com servidor')),

@@ -14,6 +14,11 @@ class FinanceiroAdminScreen extends StatefulWidget {
 }
 
 class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   List<Map<String, dynamic>> alunos = [];
   bool loading = true;
 
@@ -26,9 +31,12 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
   Future<void> carregar() async {
     try {
       final res = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/financeiro/alunos'),
+        Uri.parse('$baseUrl/financeiro/alunos'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
+
+      print('FIN ADM STATUS: ${res.statusCode}');
+      print('FIN ADM BODY: ${res.body}');
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -41,6 +49,7 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
         setState(() => loading = false);
       }
     } catch (e) {
+      print('ERRO FIN ADM: $e');
       setState(() => loading = false);
     }
   }
@@ -48,9 +57,12 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
   Future<void> pagar(int id) async {
     try {
       final res = await http.put(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/financeiro/pagar/$id'),
+        Uri.parse('$baseUrl/financeiro/pagar/$id'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
+
+      print('PAGAR STATUS: ${res.statusCode}');
+      print('PAGAR BODY: ${res.body}');
 
       if (res.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,10 +71,15 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
         carregar();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.body.isNotEmpty ? res.body : 'Erro ao pagar')),
+          SnackBar(
+            content: Text(
+              res.body.isNotEmpty ? res.body : 'Erro ao pagar',
+            ),
+          ),
         );
       }
     } catch (e) {
+      print('ERRO PAGAR: $e');
     }
   }
 

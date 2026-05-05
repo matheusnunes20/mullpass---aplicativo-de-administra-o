@@ -12,6 +12,11 @@ class HistoricoScreen extends StatefulWidget {
 }
 
 class _HistoricoScreenState extends State<HistoricoScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   List historico = [];
   bool loading = true;
 
@@ -24,28 +29,41 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
   Future<void> carregarHistorico() async {
     try {
       final response = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/historico'),
+        Uri.parse('$baseUrl/presencas/historico'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
       );
 
-      final data = jsonDecode(response.body);
+      print('HIST GERAL STATUS: ${response.statusCode}');
+      print('HIST GERAL BODY: ${response.body}');
 
-      setState(() {
-        historico = data;
-        loading = false;
-      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          historico = data;
+          loading = false;
+        });
+      } else {
+        setState(() => loading = false);
+      }
+
     } catch (e) {
+      print('ERRO HIST GERAL: $e');
       setState(() => loading = false);
     }
   }
 
   String formatarData(String data) {
-    final date = DateTime.parse(data);
-    return "${date.day.toString().padLeft(2, '0')}/"
-           "${date.month.toString().padLeft(2, '0')}/"
-           "${date.year}";
+    try {
+      final date = DateTime.parse(data);
+      return "${date.day.toString().padLeft(2, '0')}/"
+             "${date.month.toString().padLeft(2, '0')}/"
+             "${date.year}";
+    } catch (e) {
+      return data;
+    }
   }
 
   Widget cardHistorico(Map item) {
@@ -54,10 +72,10 @@ class _HistoricoScreenState extends State<HistoricoScreen> {
       child: ListTile(
         leading: Icon(Icons.access_time, color: Colors.amber),
         title: Text(
-          item['horario'],
+          item['horario'] ?? '-',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(formatarData(item['data'])),
+        subtitle: Text(formatarData(item['data'] ?? '')),
       ),
     );
   }

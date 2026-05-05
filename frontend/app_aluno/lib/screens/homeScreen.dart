@@ -16,6 +16,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   List alunos = [];
   Map user = {};
 
@@ -29,11 +34,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> buscarUsuario() async {
     try {
       final response = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/usuarios/me'),
+        Uri.parse('$baseUrl/usuarios/me'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
       );
+
+      print('USER STATUS: ${response.statusCode}');
+      print('USER BODY: ${response.body}');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -41,17 +49,21 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
+      print('ERRO USER: $e');
     }
   }
 
   Future<void> buscarAlunos() async {
     try {
       final response = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/alunos'),
+        Uri.parse('$baseUrl/alunos'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
       );
+
+      print('ALUNOS STATUS: ${response.statusCode}');
+      print('ALUNOS BODY: ${response.body}');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -59,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
+      print('ERRO ALUNOS: $e');
     }
   }
 
@@ -96,6 +109,8 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (context, index) {
                 final aluno = alunos[index];
 
+                final nome = aluno['nome']?.toString() ?? '-';
+
                 return Card(
                   elevation: 2,
                   margin: EdgeInsets.only(bottom: 10),
@@ -118,13 +133,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     leading: CircleAvatar(
                       backgroundColor: Colors.amber,
                       child: Text(
-                        aluno['nome'][0],
+                        nome.isNotEmpty ? nome[0] : '?',
                         style: TextStyle(color: Colors.black),
                       ),
                     ),
 
                     title: Text(
-                      aluno['nome'],
+                      nome,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
 
@@ -134,6 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? IconButton(
                             icon: Icon(Icons.delete, color: Colors.red),
                             onPressed: () {
+                              // implementar delete se quiser
                             },
                           )
                         : null,

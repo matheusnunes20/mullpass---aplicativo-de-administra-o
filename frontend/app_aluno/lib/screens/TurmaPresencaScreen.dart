@@ -20,6 +20,11 @@ class TurmaPresencaScreen extends StatefulWidget {
 }
 
 class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   List lista = [];
   bool loading = true;
 
@@ -33,11 +38,15 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/turma/${widget.turmaId}'),
+          '$baseUrl/presencas/turma/${widget.turmaId}',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
       );
+
+      print('PRESENCA TURMA STATUS: ${response.statusCode}');
+      print('PRESENCA TURMA BODY: ${response.body}');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -48,11 +57,14 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
         setState(() => loading = false);
       }
     } catch (e) {
+      print('ERRO PRESENCA TURMA: $e');
       setState(() => loading = false);
     }
   }
 
   Widget alunoCard(Map aluno) {
+    final nome = aluno['nome']?.toString() ?? '-';
+
     return Card(
       elevation: 2,
       margin: EdgeInsets.only(bottom: 10),
@@ -60,7 +72,6 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        // 🔥 CLICK PARA VER HISTÓRICO
         onTap: () {
           final alunoId =
               int.tryParse(aluno['id'].toString()) ?? 0;
@@ -73,7 +84,7 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
               builder: (_) => HistoricoAlunoScreen(
                 token: widget.token,
                 alunoId: alunoId,
-                nome: aluno['nome'],
+                nome: nome,
               ),
             ),
           );
@@ -83,10 +94,12 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
           backgroundColor: Colors.green,
           child: Icon(Icons.check, color: Colors.white),
         ),
+
         title: Text(
-          aluno['nome'],
+          nome,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+
         subtitle: Text(aluno['telefone'] ?? ''),
       ),
     );

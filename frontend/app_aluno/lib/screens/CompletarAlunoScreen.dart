@@ -25,6 +25,10 @@ class CompletarAlunoScreen extends StatefulWidget {
 
 class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
 
+  // ✅ BASE URL CENTRALIZADA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   final ruaController = TextEditingController();
   final numeroController = TextEditingController();
   final bairroController = TextEditingController();
@@ -65,15 +69,18 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
         'plano_id': planoId,
       };
 
-final response = await http.post(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/alunos/public'),
+      final response = await http.post(
+        Uri.parse('$baseUrl/alunos/public'),
         headers: {
           'Content-Type': 'application/json',
         },
         body: jsonEncode(body),
       );
 
-if (response.statusCode == 200 || response.statusCode == 201) {
+      print('STATUS: ${response.statusCode}');
+      print('BODY: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Cadastro completo com sucesso')),
@@ -94,6 +101,7 @@ if (response.statusCode == 200 || response.statusCode == 201) {
       }
 
     } catch (e) {
+      print('ERRO: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro de conexão')),
@@ -200,6 +208,7 @@ if (response.statusCode == 200 || response.statusCode == 201) {
             dropdown('Sexo', sexo, sexos, (v) {
               setState(() => sexo = v!);
             }),
+
             Padding(
               padding: EdgeInsets.only(bottom: 10),
               child: DropdownButtonFormField<int>(

@@ -15,6 +15,11 @@ class RachaScreen extends StatefulWidget {
 }
 
 class _RachaScreenState extends State<RachaScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   List rachas = [];
 
   @override
@@ -26,11 +31,14 @@ class _RachaScreenState extends State<RachaScreen> {
   Future<void> buscarRachas() async {
     try {
       final response = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas'),
+        Uri.parse('$baseUrl/rachas'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
       );
+
+      print('RACHAS STATUS: ${response.statusCode}');
+      print('RACHAS BODY: ${response.body}');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -38,48 +46,63 @@ class _RachaScreenState extends State<RachaScreen> {
         });
       }
     } catch (e) {
+      print('ERRO RACHAS: $e');
     }
   }
 
   Future<void> entrarRacha(int id) async {
-    final response = await http.post(
-      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas/entrar'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'racha_id': id}),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/rachas/entrar'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'racha_id': id}),
+      );
 
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Entrou no racha')),
-      );
-      buscarRachas();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.body)),
-      );
+      print('ENTRAR STATUS: ${response.statusCode}');
+      print('ENTRAR BODY: ${response.body}');
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Entrou no racha')),
+        );
+        buscarRachas();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.body)),
+        );
+      }
+    } catch (e) {
+      print('ERRO ENTRAR: $e');
     }
   }
 
   Future<void> deletarRacha(int id) async {
-    final response = await http.delete(
-      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/rachas/$id'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-      },
-    );
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/rachas/$id'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      buscarRachas();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Racha excluído')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.body)),
-      );
+      print('DELETE STATUS: ${response.statusCode}');
+      print('DELETE BODY: ${response.body}');
+
+      if (response.statusCode == 200) {
+        buscarRachas();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Racha excluído')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.body)),
+        );
+      }
+    } catch (e) {
+      print('ERRO DELETE: $e');
     }
   }
 
@@ -184,6 +207,7 @@ class _RachaScreenState extends State<RachaScreen> {
                         ),
                       );
                     },
+
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

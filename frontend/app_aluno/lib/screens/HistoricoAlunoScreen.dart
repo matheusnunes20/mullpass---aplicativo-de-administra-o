@@ -19,6 +19,11 @@ class HistoricoAlunoScreen extends StatefulWidget {
 }
 
 class _HistoricoAlunoScreenState extends State<HistoricoAlunoScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   List historico = [];
   bool loading = true;
 
@@ -29,25 +34,40 @@ class _HistoricoAlunoScreenState extends State<HistoricoAlunoScreen> {
   }
 
   Future<void> carregarHistorico() async {
-    final res = await http.get(
-      Uri.parse(
-          'https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/aluno/${widget.alunoId}/historico'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-      },
-    );
+    try {
+      final res = await http.get(
+        Uri.parse(
+          '$baseUrl/presencas/aluno/${widget.alunoId}/historico',
+        ),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
 
-    if (res.statusCode == 200) {
-      setState(() {
-        historico = jsonDecode(res.body);
-        loading = false;
-      });
+      print('HIST STATUS: ${res.statusCode}');
+      print('HIST BODY: ${res.body}');
+
+      if (res.statusCode == 200) {
+        setState(() {
+          historico = jsonDecode(res.body);
+          loading = false;
+        });
+      } else {
+        setState(() => loading = false);
+      }
+    } catch (e) {
+      print('ERRO HIST: $e');
+      setState(() => loading = false);
     }
   }
 
   String formatar(String data) {
-    final d = DateTime.parse(data);
-    return "${d.day}/${d.month}/${d.year}";
+    try {
+      final d = DateTime.parse(data);
+      return "${d.day}/${d.month}/${d.year}";
+    } catch (e) {
+      return data;
+    }
   }
 
   @override
@@ -67,10 +87,13 @@ class _HistoricoAlunoScreenState extends State<HistoricoAlunoScreen> {
                   itemCount: historico.length,
                   itemBuilder: (_, i) {
                     final item = historico[i];
+
                     return Card(
                       child: ListTile(
-                        title: Text(item['horario']),
-                        subtitle: Text(formatar(item['data'])),
+                        title: Text(item['horario'] ?? '-'),
+                        subtitle: Text(
+                          formatar(item['data'] ?? ''),
+                        ),
                       ),
                     );
                   },

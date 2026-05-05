@@ -24,6 +24,11 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+
+  // ✅ BASE URL CENTRALIZADA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   bool bloqueado = false;
   bool loading = true;
 
@@ -36,11 +41,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> verificarFinanceiro() async {
     try {
       final res = await http.get(
-        Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/financeiro/me'),
+        Uri.parse('$baseUrl/financeiro/me'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
       );
+
+      print('FINANCEIRO STATUS: ${res.statusCode}');
+      print('FINANCEIRO BODY: ${res.body}');
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -58,6 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         loading = false;
       });
     } catch (e) {
+      print('ERRO FINANCEIRO: $e');
       setState(() => loading = false);
     }
   }
@@ -178,7 +187,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         }
                       }),
 
-                      // 🔥 ALUNO
                       if (isAluno) ...[
                         card(context, 'Presença', Icons.check_circle,
                             Colors.green, () {
@@ -187,7 +195,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             MaterialPageRoute(
                               builder: (_) => PresencaScreen(
                                 token: widget.token,
-                                nome: username, // 🔥 CORRIGIDO
+                                nome: username,
                               ),
                             ),
                           );
@@ -207,7 +215,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         }),
                       ],
 
-                      // 🔥 STAFF
                       if (isStaff) ...[
                         card(context, 'Criar Racha', Icons.add, Colors.black,
                             () {

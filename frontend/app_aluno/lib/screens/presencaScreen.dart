@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'HistoricoScreen.dart'; // 🔥 IMPORT
+import 'HistoricoScreen.dart';
 
 class PresencaScreen extends StatefulWidget {
   final String token;
@@ -14,6 +14,11 @@ class PresencaScreen extends StatefulWidget {
 }
 
 class _PresencaScreenState extends State<PresencaScreen> {
+
+  // ✅ BASE URL CORRETA
+  final String baseUrl =
+      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+
   List turmas = [];
   int? turmaSelecionada;
 
@@ -28,80 +33,108 @@ class _PresencaScreenState extends State<PresencaScreen> {
   }
 
   Future<void> carregarTurmas() async {
-    final res = await http.get(
-      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/turmas'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
-    );
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/presencas/turmas'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
 
-    if (res.statusCode == 200) {
-      setState(() {
-        turmas = jsonDecode(res.body);
-      });
+      print('TURMAS STATUS: ${res.statusCode}');
+      print('TURMAS BODY: ${res.body}');
+
+      if (res.statusCode == 200) {
+        setState(() {
+          turmas = jsonDecode(res.body);
+        });
+      }
+    } catch (e) {
+      print('ERRO TURMAS: $e');
     }
   }
 
   Future<void> carregarPresencaHoje() async {
-    final res = await http.get(
-      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/hoje'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
-    );
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/presencas/hoje'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
 
-    if (res.statusCode == 200 && res.body != 'null') {
-      final data = jsonDecode(res.body);
+      print('HOJE STATUS: ${res.statusCode}');
+      print('HOJE BODY: ${res.body}');
 
-      if (data != null) {
-        setState(() {
-          confirmou = true;
-          turmaSelecionada = data['id'];
-          horarioConfirmado = data['horario'];
-        });
+      if (res.statusCode == 200 && res.body != 'null') {
+        final data = jsonDecode(res.body);
+
+        if (data != null) {
+          setState(() {
+            confirmou = true;
+            turmaSelecionada = data['id'];
+            horarioConfirmado = data['horario'];
+          });
+        }
       }
+    } catch (e) {
+      print('ERRO HOJE: $e');
     }
   }
 
   Future<void> confirmarPresenca() async {
-    final res = await http.post(
-      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/confirmar'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json'
-      },
-      body: jsonEncode({
-        'turma_id': turmaSelecionada,
-      }),
-    );
-
-    if (res.statusCode == 201) {
-      final turma =
-          turmas.firstWhere((t) => t['id'] == turmaSelecionada);
-
-      setState(() {
-        confirmou = true;
-        horarioConfirmado = turma['horario'];
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Presença confirmada')),
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/presencas/confirmar'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json'
+        },
+        body: jsonEncode({
+          'turma_id': turmaSelecionada,
+        }),
       );
+
+      print('CONFIRMAR STATUS: ${res.statusCode}');
+      print('CONFIRMAR BODY: ${res.body}');
+
+      if (res.statusCode == 201) {
+        final turma =
+            turmas.firstWhere((t) => t['id'] == turmaSelecionada);
+
+        setState(() {
+          confirmou = true;
+          horarioConfirmado = turma['horario'];
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Presença confirmada')),
+        );
+      }
+    } catch (e) {
+      print('ERRO CONFIRMAR: $e');
     }
   }
 
   Future<void> removerPresenca() async {
-    final res = await http.delete(
-      Uri.parse('https://mullpass--aplicativo-de-administra-o.onrender.com/presencas/remover'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
-    );
-
-    if (res.statusCode == 200) {
-      setState(() {
-        confirmou = false;
-        turmaSelecionada = null;
-        horarioConfirmado = '';
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Presença cancelada')),
+    try {
+      final res = await http.delete(
+        Uri.parse('$baseUrl/presencas/remover'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
       );
+
+      print('REMOVER STATUS: ${res.statusCode}');
+      print('REMOVER BODY: ${res.body}');
+
+      if (res.statusCode == 200) {
+        setState(() {
+          confirmou = false;
+          turmaSelecionada = null;
+          horarioConfirmado = '';
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Presença cancelada')),
+        );
+      }
+    } catch (e) {
+      print('ERRO REMOVER: $e');
     }
   }
 
@@ -110,7 +143,6 @@ class _PresencaScreenState extends State<PresencaScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
 
-      // 🔥 APPBAR COM BOTÃO DE HISTÓRICO
       appBar: AppBar(
         title: Text('Presença'),
         backgroundColor: Colors.amber,
