@@ -4,7 +4,9 @@ import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// LISTAR TODAS AS TURMAS
+/**
+ * 📌 LISTAR TODAS AS TURMAS
+ */
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -13,17 +15,15 @@ router.get('/', authMiddleware, async (req, res) => {
         t.horario,
         t.limite,
         t.tipo,
-        COALESCE(COUNT(DISTINCT p.aluno_id), 0) as ocupadas
+        COUNT(i.id) as ocupadas
       FROM turmas t
-      LEFT JOIN presencas p 
-        ON p.turma_id = t.id
-        AND DATE(p.data) = CURRENT_DATE
+      LEFT JOIN inscricoes i ON i.turma_id = t.id
       GROUP BY t.id
       ORDER BY t.horario
     `);
 
     const turmasFormatadas = result.rows.map(t => {
-      const ocupadas = parseInt(t.ocupadas);
+      const ocupadas = parseInt(t.ocupadas, 10);
 
       return {
         id: t.id,
@@ -40,7 +40,7 @@ router.get('/', authMiddleware, async (req, res) => {
     const noite = [];
 
     turmasFormatadas.forEach(t => {
-      const hora = parseInt(t.horario.split(':')[0]);
+      const hora = parseInt(t.horario.split(':')[0], 10);
 
       if (!isNaN(hora) && hora < 12) {
         manha.push(t);
@@ -49,21 +49,24 @@ router.get('/', authMiddleware, async (req, res) => {
       }
     });
 
-    res.json({
-      manha,
-      noite
-    });
+    res.json({ manha, noite });
 
   } catch (err) {
     console.error('ERRO LISTAR TURMAS:', err);
-    res.status(500).json({ erro: 'Erro ao buscar turmas' });
+    res.status(500).json({ erro: err.message });
   }
 });
 
-// BUSCAR TURMA POR ID
+/**
+ * 📌 BUSCAR TURMA POR ID
+ */
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const result = await pool.query(`
       SELECT 
@@ -71,11 +74,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
         t.horario,
         t.limite,
         t.tipo,
-        COALESCE(COUNT(DISTINCT p.aluno_id), 0) as ocupadas
+        COUNT(i.id) as ocupadas
       FROM turmas t
-      LEFT JOIN presencas p 
-        ON p.turma_id = t.id
-        AND DATE(p.data) = CURRENT_DATE
+      LEFT JOIN inscricoes i ON i.turma_id = t.id
       WHERE t.id = $1
       GROUP BY t.id
     `, [id]);
@@ -85,7 +86,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 
     const t = result.rows[0];
-    const ocupadas = parseInt(t.ocupadas);
+    const ocupadas = parseInt(t.ocupadas, 10);
 
     res.json({
       id: t.id,
@@ -99,24 +100,29 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
   } catch (err) {
     console.error('ERRO TURMA ID:', err);
-    res.status(500).json({ erro: 'Erro ao buscar turma' });
+    res.status(500).json({ erro: err.message });
   }
 });
 
-// LISTAR ALUNOS DA TURMA
+/**
+ * 📌 LISTAR ALUNOS DA TURMA
+ */
 router.get('/:id/alunos', authMiddleware, async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const result = await pool.query(`
       SELECT 
         a.id,
         a.nome,
         a.telefone
-      FROM presencas p
-      JOIN alunos a ON a.id = p.aluno_id
-      WHERE p.turma_id = $1
-      AND DATE(p.data) = CURRENT_DATE
+      FROM inscricoes i
+      JOIN alunos a ON a.id = i.aluno_id
+      WHERE i.turma_id = $1
       ORDER BY a.nome
     `, [id]);
 
@@ -124,7 +130,7 @@ router.get('/:id/alunos', authMiddleware, async (req, res) => {
 
   } catch (err) {
     console.error('ERRO ALUNOS TURMA:', err);
-    res.status(500).json({ erro: 'Erro ao buscar alunos da turma' });
+    res.status(500).json({ erro: err.message });
   }
 });
 

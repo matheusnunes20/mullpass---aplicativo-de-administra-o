@@ -4,12 +4,19 @@ import jwt from 'jsonwebtoken';
 
 const SECRET = process.env.JWT_SECRET;
 
+/**
+ * 📌 REGISTER
+ */
 export const register = async (req, res) => {
   try {
 
-    const { email, senha, username, documento, tipo, codigo } = req.body;
+    let { email, senha, username, documento, tipo, codigo } = req.body;
 
-    // 🔥 VALIDAÇÃO OBRIGATÓRIA
+    // 🔥 NORMALIZAÇÃO
+    email = String(email).trim().toLowerCase();
+    username = String(username).trim();
+    documento = String(documento).trim();
+
     if (!email || !senha || !username || !documento) {
       return res.status(400).json({
         erro: 'Preencha todos os campos obrigatórios'
@@ -26,7 +33,7 @@ export const register = async (req, res) => {
       });
     }
 
-    // 🔥 VALIDAÇÃO DE FUNCIONÁRIO
+    // 🔥 VALIDAÇÃO FUNCIONÁRIO
     if (tipoFinal === 'funcionario') {
       if (codigo !== 'ARENAMULLBEACH') {
         return res.status(403).json({
@@ -35,9 +42,9 @@ export const register = async (req, res) => {
       }
     }
 
-    // 🔥 VERIFICA DUPLICIDADE
+    // 🔍 VERIFICA DUPLICIDADE
     const userExiste = await pool.query(
-      `SELECT * FROM usuarios 
+      `SELECT id FROM usuarios 
        WHERE email = $1 OR username = $2 OR documento = $3`,
       [email, username, documento]
     );
@@ -48,7 +55,7 @@ export const register = async (req, res) => {
       });
     }
 
-    // 🔥 GARANTE STRING E REMOVE ESPAÇOS
+    // 🔐 SENHA
     const senhaLimpa = String(senha).trim();
 
     if (senhaLimpa.length < 4) {
@@ -57,7 +64,6 @@ export const register = async (req, res) => {
       });
     }
 
-    // 🔥 HASH SEGURO
     const hash = await bcrypt.hash(senhaLimpa, 10);
 
     const result = await pool.query(
@@ -78,21 +84,30 @@ export const register = async (req, res) => {
   }
 };
 
+/**
+ * 📌 LOGIN
+ */
 export const login = async (req, res) => {
   try {
 
-    const loginInput = req.body.login || req.body.email;
-    const { senha } = req.body;
+    if (!SECRET) {
+      throw new Error('JWT_SECRET não definido');
+    }
 
-    // 🔥 VALIDAÇÃO
-    if (!loginInput || !senha) {
+    const loginInputRaw = req.body.login || req.body.email;
+    const senha = String(req.body.senha || '');
+
+    if (!loginInputRaw || !senha) {
       return res.status(400).json({
-        erro: 'Login e senha são obrigatórios'
+        erro: 'Login/email e senha são obrigatórios'
       });
     }
 
+    const loginInput = String(loginInputRaw).trim().toLowerCase();
+
     const result = await pool.query(
-      `SELECT * FROM usuarios 
+      `SELECT id, email, username, documento, senha, tipo 
+       FROM usuarios 
        WHERE email = $1 
        OR username = $1 
        OR documento = $1`,
@@ -102,15 +117,15 @@ export const login = async (req, res) => {
     const user = result.rows[0];
 
     if (!user) {
-      return res.status(400).json({
+      return res.status(401).json({
         erro: 'Usuário não encontrado'
       });
     }
 
-    const valid = await bcrypt.compare(String(senha), user.senha);
+    const valid = await bcrypt.compare(senha, user.senha);
 
     if (!valid) {
-      return res.status(400).json({
+      return res.status(401).json({
         erro: 'Senha inválida'
       });
     }

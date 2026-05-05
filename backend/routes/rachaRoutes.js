@@ -3,38 +3,49 @@ import {
   criarRacha,
   listarRachas,
   entrarRacha,
-  listarJogadoresRacha
+  listarJogadoresRacha,
+  deletarRacha
 } from '../controlleres/rachaController.js';
 
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { permit } from '../middlewares/roleMiddleware.js';
-import { deletarRacha } from '../controlleres/rachaController.js';
 
 const router = express.Router();
+
+// 📌 CRIAR RACHA
 router.post(
   '/',
   authMiddleware,
   permit('admin', 'funcionario'),
   criarRacha
 );
+
+// 📌 LISTAR RACHAS
 router.get(
   '/',
   authMiddleware,
   listarRachas
 );
+
+// 📌 ENTRAR NO RACHA
 router.post(
-  '/entrar',
+  '/:id/jogadores',
   authMiddleware,
   entrarRacha
 );
+
+// 📌 LISTAR JOGADORES
 router.get(
   '/:id/jogadores',
   authMiddleware,
   listarJogadoresRacha
 );
+
+// 📌 DELETAR RACHA
 router.delete(
   '/:id',
   authMiddleware,
+  permit('admin', 'funcionario'),
   deletarRacha
 );
 

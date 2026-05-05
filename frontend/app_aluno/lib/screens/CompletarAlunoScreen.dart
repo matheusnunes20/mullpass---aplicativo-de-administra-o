@@ -25,13 +25,17 @@ class CompletarAlunoScreen extends StatefulWidget {
 
 class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
 
-  // ✅ BASE URL CENTRALIZADA
   final String baseUrl =
       "https://mullpass-aplicativo-de-administra-o.onrender.com";
 
   final ruaController = TextEditingController();
   final numeroController = TextEditingController();
   final bairroController = TextEditingController();
+
+  late TextEditingController nomeController;
+  late TextEditingController telefoneController;
+  late TextEditingController emailController;
+  late TextEditingController documentoController;
 
   String modalidade = 'volei';
   String diaSemana = 'segunda-feira e quarta-feira';
@@ -47,6 +51,16 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
   };
 
   bool loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    nomeController = TextEditingController(text: widget.nome);
+    telefoneController = TextEditingController(text: widget.telefone);
+    emailController = TextEditingController(text: widget.email);
+    documentoController = TextEditingController(text: widget.documento);
+  }
 
   Future<void> salvarAluno() async {
     setState(() => loading = true);
@@ -70,10 +84,8 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
       };
 
       final response = await http.post(
-        Uri.parse('$baseUrl/alunos/public'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        Uri.parse('$baseUrl/alunos'), // 🔥 CORRIGIDO
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
 
@@ -95,8 +107,20 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
         );
 
       } else {
+
+        String erro = 'Erro desconhecido';
+
+        try {
+          final body = jsonDecode(response.body);
+          erro = body['erro'] ?? response.body;
+        } catch (_) {
+          erro = response.body;
+        }
+
+        print('ERRO BACKEND: $erro');
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao salvar aluno')),
+          SnackBar(content: Text(erro)),
         );
       }
 
@@ -152,16 +176,9 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
   Widget build(BuildContext context) {
 
     final modalidades = ['volei', 'futevolei', 'beach tenis'];
-
-    final dias = [
-      'segunda-feira e quarta-feira',
-      'terca-feira e quinta-feira'
-    ];
-
+    final dias = ['segunda-feira e quarta-feira', 'terca-feira e quinta-feira'];
     final horarios = ['18-19', '19-20', '20-21'];
-
     final professores = ['caua', 'joao', 'maria'];
-
     final sexos = ['masculino', 'feminino'];
 
     return Scaffold(
@@ -176,10 +193,10 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
         child: Column(
           children: [
 
-            campo('Nome', TextEditingController(text: widget.nome)),
-            campo('Telefone', TextEditingController(text: widget.telefone)),
-            campo('Email', TextEditingController(text: widget.email)),
-            campo('CPF', TextEditingController(text: widget.documento)),
+            campo('Nome', nomeController),
+            campo('Telefone', telefoneController),
+            campo('Email', emailController),
+            campo('CPF', documentoController),
 
             SizedBox(height: 10),
 
@@ -189,46 +206,27 @@ class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
 
             SizedBox(height: 10),
 
-            dropdown('Modalidade', modalidade, modalidades, (v) {
-              setState(() => modalidade = v!);
-            }),
+            dropdown('Modalidade', modalidade, modalidades, (v) => setState(() => modalidade = v!)),
+            dropdown('Dias da Semana', diaSemana, dias, (v) => setState(() => diaSemana = v!)),
+            dropdown('Horário', horario, horarios, (v) => setState(() => horario = v!)),
+            dropdown('Professor', professor, professores, (v) => setState(() => professor = v!)),
+            dropdown('Sexo', sexo, sexos, (v) => setState(() => sexo = v!)),
 
-            dropdown('Dias da Semana', diaSemana, dias, (v) {
-              setState(() => diaSemana = v!);
-            }),
-
-            dropdown('Horário', horario, horarios, (v) {
-              setState(() => horario = v!);
-            }),
-
-            dropdown('Professor', professor, professores, (v) {
-              setState(() => professor = v!);
-            }),
-
-            dropdown('Sexo', sexo, sexos, (v) {
-              setState(() => sexo = v!);
-            }),
-
-            Padding(
-              padding: EdgeInsets.only(bottom: 10),
-              child: DropdownButtonFormField<int>(
-                value: planoId,
-                decoration: InputDecoration(
-                  labelText: 'Plano',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+            DropdownButtonFormField<int>(
+              value: planoId,
+              decoration: InputDecoration(
+                labelText: 'Plano',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                items: planos.entries.map((e) {
-                  return DropdownMenuItem(
-                    value: e.key,
-                    child: Text(e.value),
-                  );
-                }).toList(),
-                onChanged: (v) {
-                  setState(() => planoId = v!);
-                },
               ),
+              items: planos.entries.map((e) {
+                return DropdownMenuItem(
+                  value: e.key,
+                  child: Text(e.value),
+                );
+              }).toList(),
+              onChanged: (v) => setState(() => planoId = v!),
             ),
 
             SizedBox(height: 20),

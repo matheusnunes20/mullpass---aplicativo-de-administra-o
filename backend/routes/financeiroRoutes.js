@@ -11,44 +11,38 @@ import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { permit } from '../middlewares/roleMiddleware.js';
 
 const router = express.Router();
-router.get('/me', authMiddleware, (req, res, next) => {
-  next();
-}, meuFinanceiro);
+
+// 📌 MEU FINANCEIRO
+router.get('/me', authMiddleware, meuFinanceiro);
+
+// 📌 LISTAR TODOS (admin/func)
 router.get(
   '/alunos',
   authMiddleware,
   permit('admin', 'funcionario'),
-  (req, res, next) => {
-    next();
-  },
   listarFinanceiroAlunos
 );
 
+// 📌 CRIAR MENSALIDADE
 router.post(
-  '/criar',
+  '/',
   authMiddleware,
   permit('admin', 'funcionario'),
-  (req, res, next) => {
-    next();
-  },
   criarMensalidade
 );
 
+// 📌 PAGAR MENSALIDADE
 router.put(
-  '/pagar/:id',
+  '/:id/pagar',
   authMiddleware,
   permit('admin', 'funcionario'),
-  (req, res, next) => {
-    next();
-  },
   pagarMensalidade
 );
+
+// 📌 HISTÓRICO DO ALUNO
 router.get(
   '/historico/:id',
   authMiddleware,
-  (req, res, next) => {
-    next();
-  },
   historicoAluno
 );
 

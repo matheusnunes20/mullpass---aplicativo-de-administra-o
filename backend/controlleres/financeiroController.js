@@ -1,4 +1,8 @@
 import pool from '../src/db.js';
+
+/**
+ * 📌 MEU FINANCEIRO
+ */
 export const meuFinanceiro = async (req, res) => {
   try {
     const aluno = await pool.query(
@@ -7,7 +11,7 @@ export const meuFinanceiro = async (req, res) => {
     );
 
     if (aluno.rows.length === 0) {
-      return res.status(404).send('Aluno não encontrado');
+      return res.status(404).json({ erro: 'Aluno não encontrado' });
     }
 
     const result = await pool.query(`
@@ -62,9 +66,16 @@ export const meuFinanceiro = async (req, res) => {
 
   } catch (err) {
     console.error('💥 ERRO /me:', err);
-    res.status(500).send('Erro ao buscar financeiro');
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
+
+/**
+ * 📌 LISTAR FINANCEIRO DE TODOS
+ */
 export const listarFinanceiroAlunos = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -104,12 +115,23 @@ export const listarFinanceiroAlunos = async (req, res) => {
 
   } catch (err) {
     console.error('💥 ERRO /alunos:', err);
-    res.status(500).send('Erro ao listar financeiro');
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
+
+/**
+ * 📌 PAGAR MENSALIDADE
+ */
 export const pagarMensalidade = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const mensalidade = await pool.query(
       'SELECT * FROM mensalidades WHERE id = $1',
@@ -117,7 +139,7 @@ export const pagarMensalidade = async (req, res) => {
     );
 
     if (mensalidade.rows.length === 0) {
-      return res.status(404).send('Mensalidade não encontrada');
+      return res.status(404).json({ erro: 'Mensalidade não encontrada' });
     }
 
     const jaPago = await pool.query(
@@ -126,7 +148,7 @@ export const pagarMensalidade = async (req, res) => {
     );
 
     if (jaPago.rows.length > 0) {
-      return res.status(400).send('Mensalidade já paga');
+      return res.status(400).json({ erro: 'Mensalidade já paga' });
     }
 
     await pool.query(`
@@ -134,16 +156,29 @@ export const pagarMensalidade = async (req, res) => {
       VALUES ($1, $2, NOW())
     `, [id, mensalidade.rows[0].valor]);
 
-    res.send('Pagamento registrado');
+    res.json({ mensagem: 'Pagamento registrado com sucesso' });
 
   } catch (err) {
     console.error('💥 ERRO pagar:', err);
-    res.status(500).send('Erro ao pagar mensalidade');
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
+
+/**
+ * 📌 CRIAR MENSALIDADE
+ */
 export const criarMensalidade = async (req, res) => {
   try {
     const { aluno_id, data_vencimento } = req.body;
+
+    if (!aluno_id || !data_vencimento) {
+      return res.status(400).json({
+        erro: 'aluno_id e data_vencimento são obrigatórios'
+      });
+    }
 
     const existe = await pool.query(`
       SELECT 1 FROM mensalidades
@@ -165,7 +200,7 @@ export const criarMensalidade = async (req, res) => {
     `, [aluno_id]);
 
     if (plano.rows.length === 0) {
-      return res.status(400).send('Aluno sem plano');
+      return res.status(400).json({ erro: 'Aluno sem plano' });
     }
 
     const valor = plano.rows[0].preco;
@@ -175,16 +210,29 @@ export const criarMensalidade = async (req, res) => {
       VALUES ($1, $2, $3)
     `, [aluno_id, valor, data_vencimento]);
 
-    res.status(201).send('Mensalidade criada');
+    res.status(201).json({
+      mensagem: 'Mensalidade criada com sucesso'
+    });
 
   } catch (err) {
     console.error('💥 ERRO criar:', err);
-    res.status(500).send('Erro ao criar mensalidade');
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
+
+/**
+ * 📌 HISTÓRICO DO ALUNO
+ */
 export const historicoAluno = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const result = await pool.query(`
       SELECT 
@@ -208,6 +256,9 @@ export const historicoAluno = async (req, res) => {
 
   } catch (err) {
     console.error('💥 ERRO histórico:', err);
-    res.status(500).send('Erro ao buscar histórico');
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };

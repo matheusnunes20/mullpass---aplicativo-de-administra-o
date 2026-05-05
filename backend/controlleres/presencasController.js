@@ -1,6 +1,8 @@
 import pool from '../src/db.js';
 
-// 🔥 LISTAR TODAS TURMAS
+/**
+ * 📌 LISTAR TURMAS
+ */
 export const listarTurmas = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -10,41 +12,51 @@ export const listarTurmas = async (req, res) => {
     `);
 
     res.json(result.rows);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao buscar turmas' });
+    console.error('ERRO LISTAR TURMAS:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
 
-// 🔥 MINHA TURMA
+/**
+ * 📌 MINHA TURMA (CORRIGIDO)
+ */
 export const minhaTurma = async (req, res) => {
   try {
-    const usuarioId = parseInt(req.user.id);
+    const usuarioId = parseInt(req.user.id, 10);
 
-    const result = await pool.query(
-      `SELECT * FROM alunos WHERE usuario_id = $1`,
-      [usuarioId]
-    );
+    const result = await pool.query(`
+      SELECT t.*
+      FROM inscricoes i
+      JOIN alunos a ON a.id = i.aluno_id
+      JOIN turmas t ON t.id = i.turma_id
+      WHERE a.usuario_id = $1
+      LIMIT 1
+    `, [usuarioId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ erro: 'Aluno não encontrado' });
+      return res.json(null);
     }
 
     res.json(result.rows[0]);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao buscar aluno' });
+    console.error('ERRO MINHA TURMA:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
 
-// 🔥 CONFIRMAR PRESENÇA
+/**
+ * 📌 CONFIRMAR PRESENÇA
+ */
 export const confirmarPresenca = async (req, res) => {
   try {
-    const usuarioId = parseInt(req.user.id);
-    const { turma_id } = req.body;
+    const usuarioId = parseInt(req.user.id, 10);
+    const turma_id = parseInt(req.body.turma_id, 10);
 
     if (!turma_id) {
-      return res.status(400).json({ erro: 'Turma obrigatória' });
+      return res.status(400).json({ erro: 'turma_id inválido' });
     }
 
     const alunoResult = await pool.query(
@@ -69,6 +81,7 @@ export const confirmarPresenca = async (req, res) => {
 
     const turma = turmaResult.rows[0];
 
+    // remove presença anterior hoje
     await pool.query(
       `DELETE FROM presencas
        WHERE aluno_id = $1
@@ -83,7 +96,7 @@ export const confirmarPresenca = async (req, res) => {
       [turma_id]
     );
 
-    const total = parseInt(count.rows[0].count);
+    const total = parseInt(count.rows[0].count, 10);
 
     if (total >= turma.limite) {
       return res.status(400).json({ erro: 'Turma cheia' });
@@ -97,16 +110,19 @@ export const confirmarPresenca = async (req, res) => {
     );
 
     res.status(201).json(result.rows[0]);
+
   } catch (err) {
-    console.error('ERRO REAL:', err);
+    console.error('ERRO CONFIRMAR PRESENÇA:', err);
     res.status(500).json({ erro: err.message });
   }
 };
 
-// 🔥 REMOVER PRESENÇA
+/**
+ * 📌 REMOVER PRESENÇA
+ */
 export const removerPresenca = async (req, res) => {
   try {
-    const usuarioId = parseInt(req.user.id);
+    const usuarioId = parseInt(req.user.id, 10);
 
     const alunoResult = await pool.query(
       `SELECT id FROM alunos WHERE usuario_id = $1`,
@@ -132,16 +148,23 @@ export const removerPresenca = async (req, res) => {
     }
 
     res.json({ mensagem: 'Presença removida com sucesso' });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao remover presença' });
+    console.error('ERRO REMOVER PRESENÇA:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
 
-// 🔥 LISTAR PRESENÇA POR TURMA
+/**
+ * 📌 LISTAR PRESENÇA POR TURMA
+ */
 export const listarPresencaPorTurma = async (req, res) => {
   try {
-    const { turma_id } = req.params;
+    const turma_id = parseInt(req.params.turma_id, 10);
+
+    if (!turma_id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const result = await pool.query(`
       SELECT 
@@ -157,16 +180,19 @@ export const listarPresencaPorTurma = async (req, res) => {
     `, [turma_id]);
 
     res.json(result.rows);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao listar presença' });
+    console.error('ERRO LISTAR PRESENÇA:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
 
-// 🔥 PRESENÇA DE HOJE
+/**
+ * 📌 MINHA PRESENÇA HOJE
+ */
 export const minhaPresencaHoje = async (req, res) => {
   try {
-    const usuarioId = parseInt(req.user.id);
+    const usuarioId = parseInt(req.user.id, 10);
 
     const alunoResult = await pool.query(
       `SELECT id FROM alunos WHERE usuario_id = $1`,
@@ -193,16 +219,19 @@ export const minhaPresencaHoje = async (req, res) => {
     }
 
     res.json(result.rows[0]);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao buscar presença' });
+    console.error('ERRO PRESENÇA HOJE:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
 
-// 🔥 HISTÓRICO DO PRÓPRIO ALUNO
+/**
+ * 📌 MEU HISTÓRICO
+ */
 export const meuHistorico = async (req, res) => {
   try {
-    const usuarioId = parseInt(req.user.id);
+    const usuarioId = parseInt(req.user.id, 10);
 
     const alunoResult = await pool.query(
       `SELECT id FROM alunos WHERE usuario_id = $1`,
@@ -227,16 +256,23 @@ export const meuHistorico = async (req, res) => {
     `, [alunoId]);
 
     res.json(result.rows);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao buscar histórico' });
+    console.error('ERRO HISTÓRICO:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
 
-// 🔥 HISTÓRICO DE QUALQUER ALUNO
+/**
+ * 📌 HISTÓRICO POR ALUNO
+ */
 export const historicoPorAluno = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const result = await pool.query(`
       SELECT 
@@ -250,8 +286,9 @@ export const historicoPorAluno = async (req, res) => {
     `, [id]);
 
     res.json(result.rows);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao buscar histórico do aluno' });
+    console.error('ERRO HISTÓRICO ALUNO:', err);
+    res.status(500).json({ erro: err.message });
   }
 };

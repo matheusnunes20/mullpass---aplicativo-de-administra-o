@@ -1,18 +1,22 @@
 import pool from '../src/db.js';
+
+/**
+ * 📌 CRIAR RACHA
+ */
 export const criarRacha = async (req, res) => {
   try {
-
-    const userId = req.user?.id || req.user?.usuario_id;
+    const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).send('Acesso negado');
+      return res.status(401).json({ erro: 'Acesso negado' });
     }
 
     const { data, hora_inicio, hora_fim, local, quadra, limite, tipo } = req.body;
 
     if (!data || !hora_inicio || !hora_fim || !local || !quadra || !limite || !tipo) {
-      return res.status(400).send('Campos obrigatórios faltando');
+      return res.status(400).json({ erro: 'Campos obrigatórios faltando' });
     }
+
     const horaInicioFormatada = hora_inicio.includes(':')
       ? hora_inicio
       : `${hora_inicio}:00`;
@@ -28,24 +32,20 @@ export const criarRacha = async (req, res) => {
       (data, hora, local, quadra, limite, tipo, criado_por)
        VALUES ($1,$2,$3,$4,$5,$6,$7)
        RETURNING *`,
-      [
-        data,
-        horaFinal,
-        local,
-        quadra,
-        limite,
-        tipo,
-        userId
-      ]
+      [data, horaFinal, local, quadra, limite, tipo, userId]
     );
 
     res.status(201).json(result.rows[0]);
 
   } catch (err) {
     console.error('ERRO CRIAR RACHA:', err);
-    res.status(500).send('Erro ao criar racha');
+    res.status(500).json({ erro: err.message });
   }
 };
+
+/**
+ * 📌 LISTAR RACHAS
+ */
 export const listarRachas = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -57,7 +57,7 @@ export const listarRachas = async (req, res) => {
         quadra,
         limite,
         tipo,
-        criado_por  -- 🔥 ESSENCIAL
+        criado_por
       FROM rachas
       ORDER BY data DESC
     `);
@@ -65,13 +65,21 @@ export const listarRachas = async (req, res) => {
     res.json(result.rows);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Erro ao listar rachas');
+    console.error('ERRO LISTAR RACHAS:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
+
+/**
+ * 📌 LISTAR JOGADORES
+ */
 export const listarJogadoresRacha = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const result = await pool.query(
       `SELECT a.nome, a.telefone
@@ -84,122 +92,138 @@ export const listarJogadoresRacha = async (req, res) => {
     res.json(result.rows);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Erro ao buscar jogadores');
+    console.error('ERRO JOGADORES RACHA:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
+
+/**
+ * 📌 ENTRAR NO RACHA
+ */
 export const entrarRacha = async (req, res) => {
   try {
-    const { racha_id } = req.body;
+    const racha_id = parseInt(req.body.racha_id, 10);
+    const userId = req.user?.id;
 
     if (!racha_id) {
-      return res.status(400).send('Racha não informado');
+      return res.status(400).json({ erro: 'racha_id inválido' });
     }
-
-    const userId = req.user?.id || req.user?.usuario_id;
 
     if (!userId) {
-      return res.status(401).send('Acesso negado');
+      return res.status(401).json({ erro: 'Acesso negado' });
     }
 
+    // 🔥 BUSCA ALUNO COM SEXO
     const alunoResult = await pool.query(
-      `SELECT id FROM alunos WHERE usuario_id = $1`,
-      [req.user.id]
+      `SELECT id, sexo FROM alunos WHERE usuario_id = $1`,
+      [userId]
     );
 
     const aluno = alunoResult.rows[0];
 
     if (!aluno) {
-      return res.status(400).send('Aluno não encontrado');
+      return res.status(400).json({ erro: 'Aluno não encontrado' });
     }
 
+    // 🔥 VERIFICA SE JÁ ESTÁ
     const jaExiste = await pool.query(
-      'SELECT * FROM racha_jogadores WHERE racha_id = $1 AND aluno_id = $2',
+      `SELECT 1 FROM racha_jogadores WHERE racha_id = $1 AND aluno_id = $2`,
       [racha_id, aluno.id]
     );
 
     if (jaExiste.rows.length > 0) {
-      return res.status(400).send('Você já está nesse racha');
+      return res.status(400).json({ erro: 'Você já está nesse racha' });
     }
 
+    // 🔥 BUSCA RACHA
     const rachaResult = await pool.query(
-      'SELECT * FROM rachas WHERE id = $1',
+      `SELECT * FROM rachas WHERE id = $1`,
       [racha_id]
     );
 
     const racha = rachaResult.rows[0];
 
     if (!racha) {
-      return res.status(404).send('Racha não encontrado');
+      return res.status(404).json({ erro: 'Racha não encontrado' });
     }
 
+    // 🔥 VERIFICA LOTAÇÃO
     const count = await pool.query(
-      'SELECT COUNT(*) FROM racha_jogadores WHERE racha_id = $1',
+      `SELECT COUNT(*) FROM racha_jogadores WHERE racha_id = $1`,
       [racha_id]
     );
 
-    if (parseInt(count.rows[0].count) >= racha.limite) {
-      return res.status(400).send('Racha lotado');
+    if (parseInt(count.rows[0].count, 10) >= racha.limite) {
+      return res.status(400).json({ erro: 'Racha lotado' });
     }
 
+    // 🔥 REGRA DE TIPO
     if (racha.tipo === 'feminino' && aluno.sexo !== 'feminino') {
-      return res.status(400).send('Racha exclusivo feminino');
+      return res.status(400).json({ erro: 'Racha exclusivo feminino' });
     }
 
     await pool.query(
-      'INSERT INTO racha_jogadores (racha_id, aluno_id) VALUES ($1,$2)',
+      `INSERT INTO racha_jogadores (racha_id, aluno_id)
+       VALUES ($1,$2)`,
       [racha_id, aluno.id]
     );
 
-    res.send('Entrou no racha');
+    res.json({ mensagem: 'Entrou no racha com sucesso' });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Erro ao entrar no racha');
+    console.error('ERRO ENTRAR RACHA:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
 
+/**
+ * 📌 DELETAR RACHA
+ */
 export const deletarRacha = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+    const userId = req.user?.id;
 
-    const userId = req.user?.id || req.user?.usuario_id;
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     if (!userId) {
-      return res.status(401).send('Acesso negado');
+      return res.status(401).json({ erro: 'Acesso negado' });
     }
 
     const result = await pool.query(
-      'SELECT * FROM rachas WHERE id = $1',
+      `SELECT * FROM rachas WHERE id = $1`,
       [id]
     );
 
     const racha = result.rows[0];
 
     if (!racha) {
-      return res.status(404).send('Racha não encontrado');
+      return res.status(404).json({ erro: 'Racha não encontrado' });
     }
+
     if (
       racha.criado_por.toString() !== userId.toString() &&
       req.user.tipo !== 'admin'
     ) {
-      return res.status(403).send('Sem permissão');
+      return res.status(403).json({ erro: 'Sem permissão' });
     }
 
     await pool.query(
-      'DELETE FROM racha_jogadores WHERE racha_id = $1',
+      `DELETE FROM racha_jogadores WHERE racha_id = $1`,
       [id]
     );
 
     await pool.query(
-      'DELETE FROM rachas WHERE id = $1',
+      `DELETE FROM rachas WHERE id = $1`,
       [id]
     );
 
-    res.send('Racha deletado');
+    res.json({ mensagem: 'Racha deletado com sucesso' });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Erro ao deletar racha');
+    console.error('ERRO DELETAR RACHA:', err);
+    res.status(500).json({ erro: err.message });
   }
 };

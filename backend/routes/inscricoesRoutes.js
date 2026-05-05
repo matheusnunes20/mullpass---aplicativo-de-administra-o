@@ -3,13 +3,19 @@ import pool from '../src/db.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+
+/**
+ * 📌 ENTRAR NA TURMA
+ */
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { turma_id } = req.body;
+    const turma_id = parseInt(req.body.turma_id);
 
     if (!turma_id) {
-      return res.status(400).json({ erro: 'turma_id obrigatório' });
+      return res.status(400).json({ erro: 'turma_id inválido' });
     }
+
+    // 🔍 pega aluno
     const alunoResult = await pool.query(
       `SELECT id FROM alunos WHERE usuario_id = $1`,
       [req.user.id]
@@ -20,6 +26,18 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const aluno_id = alunoResult.rows[0].id;
+
+    // 🔍 verifica se já está na turma
+    const jaExiste = await pool.query(
+      `SELECT * FROM inscricoes WHERE aluno_id = $1 AND turma_id = $2`,
+      [aluno_id, turma_id]
+    );
+
+    if (jaExiste.rows.length > 0) {
+      return res.status(400).json({ erro: 'Já está nesta turma' });
+    }
+
+    // 🔍 verifica turma
     const turmaResult = await pool.query(
       `SELECT limite FROM turmas WHERE id = $1`,
       [turma_id]
@@ -30,6 +48,8 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const limite = turmaResult.rows[0].limite;
+
+    // 🔍 conta vagas
     const count = await pool.query(
       `SELECT COUNT(*) FROM inscricoes WHERE turma_id = $1`,
       [turma_id]
@@ -40,10 +60,14 @@ router.post('/', authMiddleware, async (req, res) => {
     if (total >= limite) {
       return res.status(400).json({ erro: 'Turma lotada' });
     }
+
+    // 🔥 remove antiga inscrição (1 turma por aluno)
     await pool.query(
       `DELETE FROM inscricoes WHERE aluno_id = $1`,
       [aluno_id]
     );
+
+    // 🔥 cria nova
     const result = await pool.query(
       `INSERT INTO inscricoes (aluno_id, turma_id)
        VALUES ($1, $2)
@@ -55,9 +79,13 @@ router.post('/', authMiddleware, async (req, res) => {
 
   } catch (err) {
     console.error('ERRO ENTRAR TURMA:', err);
-    res.status(500).json({ erro: 'Erro ao entrar na turma' });
+    res.status(500).json({ erro: err.message });
   }
 });
+
+/**
+ * 📌 MINHA TURMA
+ */
 router.get('/me', authMiddleware, async (req, res) => {
   try {
 
@@ -67,7 +95,7 @@ router.get('/me', authMiddleware, async (req, res) => {
         t.horario,
         t.limite,
         t.tipo,
-        COALESCE(COUNT(i2.id), 0) as ocupadas
+        COUNT(i2.id) as ocupadas
       FROM inscricoes i
       JOIN alunos a ON a.id = i.aluno_id
       JOIN turmas t ON t.id = i.turma_id
@@ -95,9 +123,13 @@ router.get('/me', authMiddleware, async (req, res) => {
 
   } catch (err) {
     console.error('ERRO MINHA TURMA:', err);
-    res.status(500).json({ erro: 'Erro ao buscar turma' });
+    res.status(500).json({ erro: err.message });
   }
 });
+
+/**
+ * 📌 SAIR DA TURMA
+ */
 router.delete('/me', authMiddleware, async (req, res) => {
   try {
 
@@ -121,7 +153,7 @@ router.delete('/me', authMiddleware, async (req, res) => {
 
   } catch (err) {
     console.error('ERRO SAIR TURMA:', err);
-    res.status(500).json({ erro: 'Erro ao sair da turma' });
+    res.status(500).json({ erro: err.message });
   }
 });
 

@@ -76,17 +76,32 @@ class _CreateAlunoScreenState extends State<CreateAlunoScreen> {
         );
 
       } else {
+
+        // 🔥 MOSTRA ERRO REAL DO BACKEND
+        String erro = 'Erro desconhecido';
+
+        try {
+          final body = jsonDecode(response.body);
+          erro = body['erro'] ?? response.body;
+        } catch (_) {
+          erro = response.body;
+        }
+
+        print('ERRO BACKEND: $erro');
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao criar usuário')),
+          SnackBar(content: Text(erro)),
         );
       }
 
     } catch (e) {
+
       print('ERRO REGISTER: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro de conexão')),
+        SnackBar(content: Text('Erro de conexão com servidor')),
       );
+
     } finally {
       setState(() => loading = false);
     }

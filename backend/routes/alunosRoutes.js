@@ -11,14 +11,16 @@ import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/public', criarAluno);
+// 🔥 CORRIGIDO AQUI
+router.post('/', criarAluno);
+
 router.get('/', authMiddleware, listarAlunos);
+
 router.get('/turmas', authMiddleware, async (req, res) => {
   const result = await pool.query('SELECT * FROM turmas ORDER BY horario');
   res.json(result.rows);
 });
 
-// 🔥 ESSA LINHA FALTAVA
 router.get('/:id', authMiddleware, buscarAlunoPorId);
 
 router.put('/:id', authMiddleware, atualizarAluno);

@@ -1,15 +1,27 @@
 import pool from '../src/db.js';
+
+/**
+ * 📌 LISTAR ALUNOS
+ */
 export const listarAlunos = async (req, res) => {
   try {
     const alunos = await pool.query('SELECT * FROM alunos');
     res.json(alunos.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Erro ao listar alunos');
+    console.error('ERRO LISTAR ALUNOS:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
+
+/**
+ * 📌 CRIAR ALUNO (100% CORRIGIDO)
+ */
 export const criarAluno = async (req, res) => {
+  const client = await pool.connect();
+
   try {
+    await client.query('BEGIN');
+
     const {
       nome,
       telefone,
@@ -25,18 +37,25 @@ export const criarAluno = async (req, res) => {
       plano_id
     } = req.body;
 
-    if (!nome || !usuario_id) {
-      return res.status(400).json({ erro: 'Nome e usuário são obrigatórios' });
+    // 🔥 VALIDAÇÕES
+    if (!nome || !usuario_id || !horario || !plano_id) {
+      return res.status(400).json({
+        erro: 'Campos obrigatórios: nome, usuario_id, horario, plano_id'
+      });
     }
 
-    if (!horario) {
-      return res.status(400).json({ erro: 'Horário obrigatório' });
+    // 🔍 VALIDA USUÁRIO
+    const userCheck = await client.query(
+      'SELECT id FROM usuarios WHERE id = $1',
+      [usuario_id]
+    );
+
+    if (userCheck.rows.length === 0) {
+      return res.status(400).json({ erro: 'Usuário inválido' });
     }
 
-    if (!plano_id) {
-      return res.status(400).json({ erro: 'Plano obrigatório' });
-    }
-    const plano = await pool.query(
+    // 🔍 VALIDA PLANO
+    const plano = await client.query(
       'SELECT preco FROM planos WHERE id = $1',
       [plano_id]
     );
@@ -46,6 +65,8 @@ export const criarAluno = async (req, res) => {
     }
 
     const valorPlano = plano.rows[0].preco;
+
+    // 🔥 FORMATA HORÁRIO
     let horarioFormatado = horario;
 
     if (!horario.includes(':')) {
@@ -58,7 +79,34 @@ export const criarAluno = async (req, res) => {
       horarioFormatado = `${partes[0]}:00-${partes[1]}:00`;
     }
 
-    const result = await pool.query(
+    // 🔍 VALIDA TURMA
+    const turmaResult = await client.query(
+      `SELECT id, limite FROM turmas WHERE horario = $1 LIMIT 1`,
+      [horarioFormatado]
+    );
+
+    if (turmaResult.rows.length === 0) {
+      return res.status(400).json({
+        erro: 'Nenhuma turma encontrada para esse horário'
+      });
+    }
+
+    const turma = turmaResult.rows[0];
+
+    // 🔍 VERIFICA LOTAÇÃO
+    const count = await client.query(
+      `SELECT COUNT(*) FROM inscricoes WHERE turma_id = $1`,
+      [turma.id]
+    );
+
+    const total = parseInt(count.rows[0].count, 10);
+
+    if (total >= turma.limite) {
+      return res.status(400).json({ erro: 'Turma cheia' });
+    }
+
+    // 🔥 CRIA ALUNO
+    const alunoResult = await client.query(
       `INSERT INTO alunos 
       (nome, telefone, email, documento, endereco, modalidade, dia_semana, horario, professor, sexo, usuario_id, plano_id)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
@@ -79,75 +127,50 @@ export const criarAluno = async (req, res) => {
       ]
     );
 
-    const aluno = result.rows[0];
-    const turmaResult = await pool.query(
-      `SELECT id, limite 
-       FROM turmas 
-       WHERE horario = $1
-       LIMIT 1`,
-      [horarioFormatado]
+    const aluno = alunoResult.rows[0];
+
+    // 🔥 INSCRIÇÃO
+    await client.query(
+      `INSERT INTO inscricoes (aluno_id, turma_id)
+       VALUES ($1, $2)`,
+      [aluno.id, turma.id]
     );
 
-    if (turmaResult.rows.length === 0) {
-      return res.status(400).json({
-        erro: 'Nenhuma turma encontrada para esse horário'
-      });
-    }
-
-    const turma = turmaResult.rows[0];
-    const jaInscrito = await pool.query(
-      `SELECT 1 FROM inscricoes WHERE aluno_id = $1`,
-      [aluno.id]
+    // 🔥 MENSALIDADE
+    await client.query(
+      `INSERT INTO mensalidades (aluno_id, valor, data_vencimento)
+       VALUES ($1, $2, CURRENT_DATE + INTERVAL '30 days')`,
+      [aluno.id, valorPlano]
     );
 
-    if (jaInscrito.rows.length === 0) {
-
-      const count = await pool.query(
-        `SELECT COUNT(*) FROM inscricoes WHERE turma_id = $1`,
-        [turma.id]
-      );
-
-      const total = parseInt(count.rows[0].count);
-
-      if (total >= turma.limite) {
-        return res.status(400).json({ erro: 'Turma cheia' });
-      }
-
-      await pool.query(
-        `INSERT INTO inscricoes (aluno_id, turma_id)
-         VALUES ($1, $2)`,
-        [aluno.id, turma.id]
-      );
-
-    } else {
-    }
-    const existeMensalidade = await pool.query(
-      `SELECT 1 FROM mensalidades 
-       WHERE aluno_id = $1 
-       AND DATE_TRUNC('month', data_vencimento) = DATE_TRUNC('month', CURRENT_DATE)`,
-      [aluno.id]
-    );
-
-    if (existeMensalidade.rows.length === 0) {
-      await pool.query(
-        `INSERT INTO mensalidades (aluno_id, valor, data_vencimento)
-         VALUES ($1, $2, CURRENT_DATE + INTERVAL '30 days')`,
-        [aluno.id, valorPlano]
-      );
-
-    } else {
-    }
+    await client.query('COMMIT');
 
     res.status(201).json(aluno);
 
   } catch (err) {
-    console.error('💥 ERRO REAL:', err);
-    res.status(500).json({ erro: err.message });
+    await client.query('ROLLBACK');
+
+    console.error('💥 ERRO CRIAR ALUNO:', err);
+
+    res.status(500).json({
+      erro: err.message
+    });
+
+  } finally {
+    client.release();
   }
 };
+
+/**
+ * 📌 ATUALIZAR ALUNO
+ */
 export const atualizarAluno = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const result = await pool.query(
       `UPDATE alunos SET 
@@ -175,14 +198,21 @@ export const atualizarAluno = async (req, res) => {
     res.json(result.rows[0]);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Erro ao atualizar aluno');
+    console.error('ERRO ATUALIZAR ALUNO:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
 
+/**
+ * 📌 BUSCAR ALUNO POR ID
+ */
 export const buscarAlunoPorId = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const result = await pool.query(
       `SELECT * FROM alunos WHERE id = $1`,
@@ -196,24 +226,31 @@ export const buscarAlunoPorId = async (req, res) => {
     res.json(result.rows[0]);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ erro: 'Erro ao buscar aluno' });
+    console.error('ERRO BUSCAR ALUNO:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
 
+/**
+ * 📌 DELETAR ALUNO
+ */
 export const deletarAluno = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id, 10);
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     await pool.query(
       'DELETE FROM alunos WHERE id=$1',
       [id]
     );
 
-    res.send('Aluno deletado');
+    res.json({ mensagem: 'Aluno deletado com sucesso' });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Erro ao deletar aluno');
+    console.error('ERRO DELETAR ALUNO:', err);
+    res.status(500).json({ erro: err.message });
   }
 };
