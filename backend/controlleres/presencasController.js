@@ -4,32 +4,28 @@ import pool from '../src/db.js';
  * 📌 CONFIRMAR PRESENÇA
  */
 export const confirmarPresenca = async (req, res) => {
+  const client = await pool.connect();
+
   try {
+    await client.query('BEGIN');
+
     const usuarioId = parseInt(req.user.id, 10);
     const turma_id = parseInt(req.body.turma_id, 10);
 
     console.log('🔥 USUARIO LOGADO:', usuarioId);
     console.log('🔥 TURMA RECEBIDA:', turma_id);
 
-    if (!turma_id) {
-      return res.status(400).json({ erro: 'turma_id inválido' });
+    if (!usuarioId || !turma_id) {
+      return res.status(400).json({ erro: 'Dados inválidos' });
     }
 
     /**
-     * 🔥 BUSCAR ALUNO (COM PROTEÇÃO)
+     * 🔥 BUSCAR ALUNO (FORÇANDO 1 SÓ)
      */
-    const alunoResult = await pool.query(
-      `SELECT id FROM alunos WHERE usuario_id = $1`,
+    const alunoResult = await client.query(
+      `SELECT id FROM alunos WHERE usuario_id = $1 LIMIT 1`,
       [usuarioId]
     );
-
-    // 🚨 PROTEÇÃO CONTRA BUG
-    if (alunoResult.rows.length > 1) {
-      console.error('❌ ERRO GRAVE: múltiplos alunos para mesmo usuário', alunoResult.rows);
-      return res.status(500).json({
-        erro: 'Erro de integridade: múltiplos alunos vinculados ao usuário'
-      });
-    }
 
     if (alunoResult.rows.length === 0) {
       return res.status(404).json({ erro: 'Aluno não encontrado' });
@@ -42,7 +38,7 @@ export const confirmarPresenca = async (req, res) => {
     /**
      * 🔥 VALIDAR TURMA
      */
-    const turmaResult = await pool.query(
+    const turmaResult = await client.query(
       `SELECT id, limite FROM turmas WHERE id = $1`,
       [turma_id]
     );
@@ -54,9 +50,14 @@ export const confirmarPresenca = async (req, res) => {
     const turma = turmaResult.rows[0];
 
     /**
-     * 🔥 REMOVE PRESENÇA ANTERIOR (HOJE)
+     * 🔥 LOCK PARA EVITAR DUPLICAÇÃO
      */
-    await pool.query(
+    await client.query(`LOCK TABLE presencas IN SHARE ROW EXCLUSIVE MODE`);
+
+    /**
+     * 🔥 REMOVE PRESENÇA ANTERIOR HOJE
+     */
+    await client.query(
       `DELETE FROM presencas
        WHERE aluno_id = $1
        AND DATE(data) = CURRENT_DATE`,
@@ -64,10 +65,11 @@ export const confirmarPresenca = async (req, res) => {
     );
 
     /**
-     * 🔥 CONTAR OCUPAÇÃO
+     * 🔥 CONTAR OCUPAÇÃO (COM LOCK)
      */
-    const count = await pool.query(
-      `SELECT COUNT(DISTINCT aluno_id) FROM presencas
+    const count = await client.query(
+      `SELECT COUNT(DISTINCT aluno_id)
+       FROM presencas
        WHERE turma_id = $1
        AND DATE(data) = CURRENT_DATE`,
       [turma_id]
@@ -75,27 +77,38 @@ export const confirmarPresenca = async (req, res) => {
 
     const total = parseInt(count.rows[0].count, 10);
 
+    console.log('📊 OCUPAÇÃO ATUAL:', total);
+
     if (total >= turma.limite) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ erro: 'Turma cheia' });
     }
 
     /**
      * 🔥 INSERIR PRESENÇA
      */
-    const result = await pool.query(
+    const result = await client.query(
       `INSERT INTO presencas (aluno_id, turma_id, data)
        VALUES ($1, $2, NOW())
        RETURNING *`,
       [alunoId, turma_id]
     );
 
+    await client.query('COMMIT');
+
     console.log('🎯 PRESENÇA REGISTRADA:', result.rows[0]);
 
     res.status(201).json(result.rows[0]);
 
   } catch (err) {
-    console.error('ERRO CONFIRMAR PRESENÇA:', err);
+    await client.query('ROLLBACK');
+
+    console.error('❌ ERRO CONFIRMAR PRESENÇA:', err);
+
     res.status(500).json({ erro: err.message });
+
+  } finally {
+    client.release();
   }
 };
 
@@ -106,6 +119,10 @@ export const confirmarPresenca = async (req, res) => {
 export const historicoPorAluno = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ erro: 'ID inválido' });
+    }
 
     const result = await pool.query(`
       SELECT p.*, t.horario
@@ -118,7 +135,7 @@ export const historicoPorAluno = async (req, res) => {
     res.json(result.rows);
 
   } catch (err) {
-    console.error('ERRO HISTORICO ALUNO:', err);
+    console.error('❌ ERRO HISTORICO ALUNO:', err);
     res.status(500).json({ erro: err.message });
   }
 };
