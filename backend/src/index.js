@@ -44,10 +44,11 @@ app.get('/test-db', async (req, res) => {
 });
 
 /**
- * 🔥 INIT COMPLETO DO BANCO (RODA 1 VEZ)
+ * 🔥 INIT COMPLETO DO BANCO
  */
 app.get('/init-full-db', async (req, res) => {
   try {
+
     await pool.query(`
 
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -61,13 +62,13 @@ app.get('/init-full-db', async (req, res) => {
 
     CREATE TABLE IF NOT EXISTS planos (
       id SERIAL PRIMARY KEY,
-      name TEXT,
+      name TEXT UNIQUE,
       preco NUMERIC
     );
 
     CREATE TABLE IF NOT EXISTS turmas (
       id SERIAL PRIMARY KEY,
-      horario VARCHAR(20),
+      horario VARCHAR(20) UNIQUE, -- 🔥 EVITA DUPLICAÇÃO
       limite INT,
       tipo VARCHAR(20),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -165,14 +166,14 @@ app.get('/init-full-db', async (req, res) => {
     `);
 
     /**
-     * 🔥 DADOS FIXOS
+     * 🔥 DADOS FIXOS (SEM DUPLICAR)
      */
     await pool.query(`
       INSERT INTO planos (name, preco) VALUES
       ('Futevôlei 2x semana', 150),
       ('Beach Tennis ilimitado', 200),
       ('Vôlei básico', 120)
-      ON CONFLICT DO NOTHING;
+      ON CONFLICT (name) DO NOTHING;
     `);
 
     await pool.query(`
@@ -183,11 +184,32 @@ app.get('/init-full-db', async (req, res) => {
       ('19:00-20:00', 10, 'mista'),
       ('20:00-21:00', 8, 'mista'),
       ('21:00-22:00', 6, 'mista')
-      ON CONFLICT DO NOTHING;
+      ON CONFLICT (horario) DO NOTHING;
     `);
 
-    res.send('🔥 BANCO COMPLETO CRIADO COM SUCESSO');
+    res.send('🔥 BANCO CRIADO SEM DUPLICAÇÃO');
 
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err.message);
+  }
+});
+
+/**
+ * 🔥 CORRIGIR DUPLICAÇÃO (RODAR 1 VEZ)
+ */
+app.get('/fix-turmas', async (req, res) => {
+  try {
+    await pool.query(`
+      DELETE FROM turmas
+      WHERE id NOT IN (
+        SELECT MIN(id)
+        FROM turmas
+        GROUP BY horario
+      );
+    `);
+
+    res.send('🔥 Turmas duplicadas removidas');
   } catch (err) {
     console.error(err);
     res.status(500).send(err.message);
