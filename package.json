@@ -17,5 +17,9 @@
   "bugs": {
     "url": "https://github.com/matheusnunes20/mullpass---aplicativo-de-administra-o/issues"
   },
-  "homepage": "https://github.com/matheusnunes20/mullpass---aplicativo-de-administra-o#readme"
+  "homepage": "https://github.com/matheusnunes20/mullpass---aplicativo-de-administra-o#readme",
+  "dependencies": {
+    "morgan": "^1.10.1",
+    "winston": "^3.19.0"
+  }
 }

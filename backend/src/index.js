@@ -2,7 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-
+import logger from './logger.js';
+import morgan from 'morgan';
+import logger from '../src/logger.js';
 import pool from './db.js';
 
 import alunosRoutes from '../routes/alunosRoutes.js';
@@ -29,6 +31,11 @@ cron.schedule('0 2 * * *', () => {
 
 app.use(cors({ origin: '*' }));
 app.use(express.json());
+app.use(morgan('combined', {
+  stream: {
+    write: (message) => logger.info(message.trim())
+  }
+}));
 
 /**
  * 🔥 TESTE DE BANCO
@@ -38,7 +45,7 @@ app.get('/test-db', async (req, res) => {
     const result = await pool.query('SELECT NOW()');
     res.json({ success: true, time: result.rows[0] });
   } catch (err) {
-    console.error(err);
+    logger.error(`ERRO: ${err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -68,7 +75,7 @@ app.get('/init-full-db', async (req, res) => {
 
     CREATE TABLE IF NOT EXISTS turmas (
       id SERIAL PRIMARY KEY,
-      horario VARCHAR(20) UNIQUE, -- 🔥 EVITA DUPLICAÇÃO
+      horario VARCHAR(20) UNIQUE,
       limite INT,
       tipo VARCHAR(20),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -190,28 +197,7 @@ app.get('/init-full-db', async (req, res) => {
     res.send('🔥 BANCO CRIADO SEM DUPLICAÇÃO');
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send(err.message);
-  }
-});
-
-/**
- * 🔥 CORRIGIR DUPLICAÇÃO (RODAR 1 VEZ)
- */
-app.get('/fix-turmas', async (req, res) => {
-  try {
-    await pool.query(`
-      DELETE FROM turmas
-      WHERE id NOT IN (
-        SELECT MIN(id)
-        FROM turmas
-        GROUP BY horario
-      );
-    `);
-
-    res.send('🔥 Turmas duplicadas removidas');
-  } catch (err) {
-    console.error(err);
+    logger.error(`ERRO: ${err.message}`);
     res.status(500).send(err.message);
   }
 });
@@ -240,4 +226,18 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+});
+
+app.use((err, req, res, next) => {
+  logger.error(`
+  🔥 ERRO GLOBAL:
+  URL: ${req.originalUrl}
+  METHOD: ${req.method}
+  BODY: ${JSON.stringify(req.body)}
+  ERROR: ${err.message}
+  `);
+
+  res.status(500).json({
+    erro: 'Erro interno do servidor'
+  });
 });
