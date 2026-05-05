@@ -2,8 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-import logger from './logger.js'; // ✅ APENAS UMA IMPORTAÇÃO
-import morgan from 'morgan';
 import pool from './db.js';
 
 import alunosRoutes from '../routes/alunosRoutes.js';
@@ -28,7 +26,7 @@ const app = express();
  * 🔥 CRON JOB
  */
 cron.schedule('0 2 * * *', () => {
-  logger.info('Executando geração de mensalidades...');
+  console.log('Executando geração de mensalidades...');
   gerarMensalidades();
 });
 
@@ -38,12 +36,6 @@ cron.schedule('0 2 * * *', () => {
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-app.use(morgan('combined', {
-  stream: {
-    write: (message) => logger.info(message.trim())
-  }
-}));
-
 /**
  * 🔥 TESTE DE BANCO
  */
@@ -52,7 +44,7 @@ app.get('/test-db', async (req, res) => {
     const result = await pool.query('SELECT NOW()');
     res.json({ success: true, time: result.rows[0] });
   } catch (err) {
-    logger.error(`ERRO DB: ${err.message}`);
+    console.error('ERRO DB:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -62,7 +54,6 @@ app.get('/test-db', async (req, res) => {
  */
 app.get('/init-full-db', async (req, res) => {
   try {
-
     await pool.query(`
     CREATE TABLE IF NOT EXISTS turmas (
       id SERIAL PRIMARY KEY,
@@ -84,12 +75,11 @@ app.get('/init-full-db', async (req, res) => {
       ON CONFLICT (horario) DO NOTHING;
     `);
 
-    logger.info('Banco inicializado com sucesso');
+    console.log('Banco inicializado com sucesso');
 
     res.send('🔥 BANCO OK');
-
   } catch (err) {
-    logger.error(`ERRO INIT: ${err.message}`);
+    console.error('ERRO INIT:', err.message);
     res.status(500).send(err.message);
   }
 });
@@ -118,7 +108,7 @@ app.use('/aulas', authMiddleware, bloquearInadimplente, aulasRoutes);
  * 🔥 ERRO GLOBAL
  */
 app.use((err, req, res, next) => {
-  logger.error(`
+  console.error(`
   🔥 ERRO GLOBAL:
   URL: ${req.originalUrl}
   METHOD: ${req.method}
@@ -137,5 +127,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
