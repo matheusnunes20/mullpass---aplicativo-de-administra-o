@@ -32,4 +32,4 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/logomullpass.png"
+  image_path: "assets/logoMullPass.png"
