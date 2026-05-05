@@ -12,6 +12,8 @@ import 'presencaScreen.dart';
 import 'turmasScreen.dart';
 import 'financeiroScreen.dart';
 import 'financeiroAdminScreen.dart';
+import 'financeiro_relatorio_screen.dart';
+import 'inadimplentes_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String token;
@@ -25,9 +27,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
 
-  // ✅ BASE URL CENTRALIZADA
-  final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+  final String baseUrl = "http://10.0.2.2:3000";
 
   bool bloqueado = false;
   bool loading = true;
@@ -46,9 +46,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'Authorization': 'Bearer ${widget.token}',
         },
       );
-
-      print('FINANCEIRO STATUS: ${res.statusCode}');
-      print('FINANCEIRO BODY: ${res.body}');
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -118,6 +115,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+
+                  // HEADER
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(20),
@@ -151,9 +150,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   SizedBox(height: 25),
 
-                  Text('Ações',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Ações',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
 
                   SizedBox(height: 15),
 
@@ -164,8 +164,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     crossAxisSpacing: 15,
                     mainAxisSpacing: 15,
                     children: [
-                      card(context, 'Financeiro', Icons.attach_money,
-                          Colors.red, () {
+
+                      // FINANCEIRO
+                      card(context, 'Financeiro', Icons.attach_money, Colors.red, () {
                         if (isStaff) {
                           Navigator.push(
                             context,
@@ -187,9 +188,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         }
                       }),
 
+                      // RELATÓRIO
+                      if (isStaff)
+                        card(context, 'Relatório', Icons.bar_chart, Colors.purple, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => FinanceiroRelatorioScreen(
+                                token: widget.token,
+                              ),
+                            ),
+                          );
+                        }),
+
+                      // 🔴 INADIMPLENTES (NOVO)
+                      if (isStaff)
+                        card(context, 'Inadimplentes', Icons.warning, Colors.red, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => InadimplentesScreen(
+                                token: widget.token,
+                              ),
+                            ),
+                          );
+                        }),
+
+                      // ALUNO
                       if (isAluno) ...[
-                        card(context, 'Presença', Icons.check_circle,
-                            Colors.green, () {
+                        card(context, 'Presença', Icons.check_circle, Colors.green, () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -201,8 +228,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           );
                         }),
 
-                        card(context, 'Rachas',
-                            Icons.sports_volleyball, Colors.orange, () {
+                        card(context, 'Rachas', Icons.sports_volleyball, Colors.orange, () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -215,9 +241,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         }),
                       ],
 
+                      // STAFF
                       if (isStaff) ...[
-                        card(context, 'Criar Racha', Icons.add, Colors.black,
-                            () {
+                        card(context, 'Criar Racha', Icons.add, Colors.black, () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -227,8 +253,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           );
                         }),
 
-                        card(context, 'Ver Rachas', Icons.list,
-                            Colors.orange, () {
+                        card(context, 'Ver Rachas', Icons.list, Colors.orange, () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -250,8 +275,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           );
                         }),
 
-                        card(context, 'Presenças', Icons.checklist,
-                            Colors.green, () {
+                        card(context, 'Presenças', Icons.checklist, Colors.green, () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(

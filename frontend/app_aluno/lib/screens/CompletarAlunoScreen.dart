@@ -26,7 +26,7 @@ class CompletarAlunoScreen extends StatefulWidget {
 class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
 
   final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+      "http://10.0.2.2:3000";
 
   final ruaController = TextEditingController();
   final numeroController = TextEditingController();

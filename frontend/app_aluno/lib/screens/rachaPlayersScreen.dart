@@ -21,7 +21,7 @@ class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+      "http://10.0.2.2:3000";
 
   List jogadores = [];
 

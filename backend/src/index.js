@@ -16,18 +16,36 @@ import financeiroRoutes from '../routes/financeiroRoutes.js';
 
 import { bloquearInadimplente } from '../middlewares/financeiroMiddleware.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
-import { gerarMensalidades } from '../services/financeiroService.js';
+
+// 🔥 IMPORTA AS DUAS FUNÇÕES
+import {
+  gerarMensalidades,
+  atualizarStatusMensalidades
+} from '../services/financeiroService.js';
 
 dotenv.config();
 
 const app = express();
 
 /**
- * 🔥 CRON
+ * 🔥 DEBUG ENV
  */
-cron.schedule('0 2 * * *', () => {
-  console.log('Executando geração de mensalidades...');
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
+
+/**
+ * 🔥 CRON JOBS (AUTOMAÇÃO)
+ */
+
+// 💰 GERA MENSALIDADE TODO DIA 1
+cron.schedule('0 2 1 * *', () => {
+  console.log('🔥 Gerando mensalidades do mês...');
   gerarMensalidades();
+});
+
+// 🔔 ATUALIZA ATRASOS TODO DIA
+cron.schedule('0 3 * * *', () => {
+  console.log('🔔 Atualizando status de atraso...');
+  atualizarStatusMensalidades();
 });
 
 /**
@@ -37,13 +55,20 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 /**
- * 🔥 DEBUG USER (MUITO IMPORTANTE)
+ * 🔥 DEBUG AUTH
  */
 app.use((req, res, next) => {
   if (req.headers.authorization) {
     console.log('REQ AUTH HEADER:', req.headers.authorization);
   }
   next();
+});
+
+/**
+ * 🔥 ROOT (IMPORTANTE)
+ */
+app.get('/', (req, res) => {
+  res.send('API OK 🚀 LOCAL');
 });
 
 /**
@@ -76,12 +101,24 @@ app.use('/aulas', authMiddleware, bloquearInadimplente, aulasRoutes);
  * 🔥 ERRO GLOBAL
  */
 app.use((err, req, res, next) => {
-  console.error('ERRO GLOBAL:', err.message);
-  res.status(500).json({ erro: 'Erro interno do servidor' });
+  console.error(`
+🔥 ERRO GLOBAL:
+URL: ${req.originalUrl}
+METHOD: ${req.method}
+BODY: ${JSON.stringify(req.body)}
+ERROR: ${err.message}
+  `);
+
+  res.status(500).json({
+    erro: 'Erro interno do servidor'
+  });
 });
 
+/**
+ * 🚀 START SERVER
+ */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });

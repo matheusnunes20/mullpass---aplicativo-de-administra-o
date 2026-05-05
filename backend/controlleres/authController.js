@@ -90,9 +90,7 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
 
-    if (!SECRET) {
-      throw new Error('JWT_SECRET não definido');
-    }
+    const SECRET = process.env.JWT_SECRET || '123456'; // 🔥 CORREÇÃO
 
     const loginInputRaw = req.body.login || req.body.email;
     const senha = String(req.body.senha || '');

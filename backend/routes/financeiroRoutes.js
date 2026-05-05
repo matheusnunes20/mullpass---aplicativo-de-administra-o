@@ -1,10 +1,14 @@
 import express from 'express';
+
 import {
   meuFinanceiro,
   listarFinanceiroAlunos,
   pagarMensalidade,
   criarMensalidade,
-  historicoAluno
+  historicoAluno,
+  meuHistoricoFinanceiro,
+  relatorioFinanceiro,
+  listarInadimplentes // ✅ ADICIONADO
 } from '../controlleres/financeiroController.js';
 
 import { authMiddleware } from '../middlewares/authMiddleware.js';
@@ -12,10 +16,39 @@ import { permit } from '../middlewares/roleMiddleware.js';
 
 const router = express.Router();
 
-// 📌 MEU FINANCEIRO
+/**
+ * 📌 MEU FINANCEIRO (ALUNO)
+ */
 router.get('/me', authMiddleware, meuFinanceiro);
 
-// 📌 LISTAR TODOS (admin/func)
+/**
+ * 📌 HISTÓRICO DO PRÓPRIO ALUNO
+ */
+router.get('/me/historico', authMiddleware, meuHistoricoFinanceiro);
+
+/**
+ * 📌 RELATÓRIO (ADMIN/FUNCIONÁRIO)
+ */
+router.get(
+  '/relatorio',
+  authMiddleware,
+  permit('admin', 'funcionario'),
+  relatorioFinanceiro
+);
+
+/**
+ * 📌 🔴 INADIMPLENTES (ADMIN/FUNCIONÁRIO)
+ */
+router.get(
+  '/inadimplentes',
+  authMiddleware,
+  permit('admin', 'funcionario'),
+  listarInadimplentes
+);
+
+/**
+ * 📌 LISTAR TODOS (ADMIN/FUNCIONÁRIO)
+ */
 router.get(
   '/alunos',
   authMiddleware,
@@ -23,7 +56,9 @@ router.get(
   listarFinanceiroAlunos
 );
 
-// 📌 CRIAR MENSALIDADE
+/**
+ * 📌 CRIAR MENSALIDADE
+ */
 router.post(
   '/',
   authMiddleware,
@@ -31,7 +66,9 @@ router.post(
   criarMensalidade
 );
 
-// 📌 PAGAR MENSALIDADE
+/**
+ * 📌 PAGAR MENSALIDADE
+ */
 router.put(
   '/:id/pagar',
   authMiddleware,
@@ -39,10 +76,13 @@ router.put(
   pagarMensalidade
 );
 
-// 📌 HISTÓRICO DO ALUNO
+/**
+ * 📌 HISTÓRICO DE UM ALUNO (ADMIN)
+ */
 router.get(
   '/historico/:id',
   authMiddleware,
+  permit('admin', 'funcionario'),
   historicoAluno
 );
 

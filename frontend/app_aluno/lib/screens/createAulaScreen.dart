@@ -15,7 +15,7 @@ class _CreateAulaScreenState extends State<CreateAulaScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+      "http://10.0.2.2:3000";
 
   final dataController = TextEditingController();
   final horarioController = TextEditingController();

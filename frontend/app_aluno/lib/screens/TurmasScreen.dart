@@ -16,7 +16,7 @@ class _TurmasScreenState extends State<TurmasScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+      "http://10.0.2.2:3000";
 
   List turmas = [];
   Map? minhaTurma;

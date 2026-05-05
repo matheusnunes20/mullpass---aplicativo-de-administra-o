@@ -23,7 +23,7 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+      "http://10.0.2.2:3000";
 
   List lista = [];
   bool loading = true;

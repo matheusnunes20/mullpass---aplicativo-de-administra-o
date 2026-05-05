@@ -18,7 +18,7 @@ class _AlunoDetalheScreenState extends State<AlunoDetalheScreen> {
 
   // ✅ BASE URL CENTRALIZADA
   final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+      "http://10.0.2.2:3000";
 
   @override
   void initState() {

@@ -16,7 +16,7 @@ class PresencaScreen extends StatefulWidget {
 class _PresencaScreenState extends State<PresencaScreen> {
 
   final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+      "http://10.0.2.2:3000";
 
   List turmas = [];
   int? turmaSelecionada;

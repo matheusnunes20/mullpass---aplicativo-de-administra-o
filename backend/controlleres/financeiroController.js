@@ -66,10 +66,7 @@ export const meuFinanceiro = async (req, res) => {
 
   } catch (err) {
     console.error('💥 ERRO /me:', err);
-
-    res.status(500).json({
-      erro: err.message
-    });
+    res.status(500).json({ erro: err.message });
   }
 };
 
@@ -82,6 +79,7 @@ export const listarFinanceiroAlunos = async (req, res) => {
       SELECT 
         a.id,
         a.nome,
+        COALESCE(a.telefone, '') as telefone,
         p.name as plano,
         m.id as mensalidade_id,
         COALESCE(m.valor, 0) as valor,
@@ -115,10 +113,7 @@ export const listarFinanceiroAlunos = async (req, res) => {
 
   } catch (err) {
     console.error('💥 ERRO /alunos:', err);
-
-    res.status(500).json({
-      erro: err.message
-    });
+    res.status(500).json({ erro: err.message });
   }
 };
 
@@ -160,10 +155,7 @@ export const pagarMensalidade = async (req, res) => {
 
   } catch (err) {
     console.error('💥 ERRO pagar:', err);
-
-    res.status(500).json({
-      erro: err.message
-    });
+    res.status(500).json({ erro: err.message });
   }
 };
 
@@ -216,10 +208,7 @@ export const criarMensalidade = async (req, res) => {
 
   } catch (err) {
     console.error('💥 ERRO criar:', err);
-
-    res.status(500).json({
-      erro: err.message
-    });
+    res.status(500).json({ erro: err.message });
   }
 };
 
@@ -237,7 +226,6 @@ export const historicoAluno = async (req, res) => {
     const result = await pool.query(`
       SELECT 
         m.*,
-
         CASE
           WHEN EXISTS (
             SELECT 1 FROM pagamentos pg 
@@ -246,7 +234,6 @@ export const historicoAluno = async (req, res) => {
           WHEN m.data_vencimento < CURRENT_DATE THEN 'atrasado'
           ELSE 'pendente'
         END as status
-
       FROM mensalidades m
       WHERE m.aluno_id = $1
       ORDER BY m.data_vencimento DESC
@@ -256,9 +243,118 @@ export const historicoAluno = async (req, res) => {
 
   } catch (err) {
     console.error('💥 ERRO histórico:', err);
+    res.status(500).json({ erro: err.message });
+  }
+};
 
-    res.status(500).json({
-      erro: err.message
+/**
+ * 📌 HISTÓRICO DO PRÓPRIO USUÁRIO
+ */
+export const meuHistoricoFinanceiro = async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+
+    const aluno = await pool.query(
+      `SELECT id FROM alunos WHERE usuario_id = $1`,
+      [usuarioId]
+    );
+
+    if (aluno.rows.length === 0) {
+      return res.status(404).json({ erro: 'Aluno não encontrado' });
+    }
+
+    const alunoId = aluno.rows[0].id;
+
+    const result = await pool.query(`
+      SELECT 
+        m.id,
+        m.valor,
+        m.data_vencimento,
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM pagamentos pg 
+            WHERE pg.mensalidade_id = m.id
+          ) THEN 'pago'
+          WHEN m.data_vencimento < CURRENT_DATE THEN 'atrasado'
+          ELSE 'pendente'
+        END as status
+      FROM mensalidades m
+      WHERE m.aluno_id = $1
+      ORDER BY m.data_vencimento DESC
+    `, [alunoId]);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error('ERRO HISTORICO FINANCEIRO:', err);
+    res.status(500).json({ erro: err.message });
+  }
+};
+
+/**
+ * 📊 RELATÓRIO
+ */
+export const relatorioFinanceiro = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM pagamentos pg 
+            WHERE pg.mensalidade_id = m.id
+          ) THEN 'pago'
+          WHEN m.data_vencimento < CURRENT_DATE THEN 'atrasado'
+          ELSE 'pendente'
+        END as status,
+        COUNT(*) as total,
+        SUM(valor) as valor_total
+      FROM mensalidades m
+      GROUP BY status
+    `);
+
+    const totalMes = await pool.query(`
+      SELECT SUM(valor) as total
+      FROM pagamentos
+      WHERE DATE_TRUNC('month', data_pagamento) = DATE_TRUNC('month', CURRENT_DATE)
+    `);
+
+    res.json({
+      por_status: result.rows,
+      faturamento_mes: totalMes.rows[0].total || 0
     });
+
+  } catch (err) {
+    console.error('ERRO RELATORIO:', err);
+    res.status(500).json({ erro: err.message });
+  }
+};
+
+/**
+ * 🔴 INADIMPLENTES (COM TELEFONE)
+ */
+export const listarInadimplentes = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        a.id,
+        a.nome,
+        COALESCE(a.telefone, '') as telefone,
+        m.data_vencimento,
+        CURRENT_DATE - m.data_vencimento AS dias_atraso
+      FROM mensalidades m
+      JOIN alunos a ON a.id = m.aluno_id
+      WHERE m.data_vencimento < CURRENT_DATE
+      AND NOT EXISTS (
+        SELECT 1 FROM pagamentos pg
+        WHERE pg.mensalidade_id = m.id
+      )
+      ORDER BY dias_atraso DESC
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error('ERRO INADIMPLENTES:', err);
+    res.status(500).json({ erro: err.message });
   }
 };

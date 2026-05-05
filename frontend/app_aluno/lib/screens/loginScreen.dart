@@ -15,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+      "http://10.0.2.2:3000";
 
   final emailController = TextEditingController();
   final senhaController = TextEditingController();

@@ -17,7 +17,7 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+      "http://10.0.2.2:3000";
 
   List<Map<String, dynamic>> alunos = [];
   bool loading = true;

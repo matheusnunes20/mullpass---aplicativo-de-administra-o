@@ -14,11 +14,11 @@ class FinanceiroScreen extends StatefulWidget {
 
 class _FinanceiroScreenState extends State<FinanceiroScreen> {
 
-  // ✅ BASE URL CORRETA
-  final String baseUrl =
-      "https://mullpass-aplicativo-de-administra-o.onrender.com";
+  final String baseUrl = "http://10.0.2.2:3000";
 
   Map<String, dynamic>? dados;
+  List historico = [];
+
   bool loading = true;
 
   @override
@@ -29,24 +29,37 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
 
   Future<void> carregar() async {
     try {
+      // 🔥 STATUS ATUAL
       final res = await http.get(
         Uri.parse('$baseUrl/financeiro/me'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
-      print('FIN USER STATUS: ${res.statusCode}');
-      print('FIN USER BODY: ${res.body}');
+      // 🔥 HISTÓRICO
+      final hist = await http.get(
+        Uri.parse('$baseUrl/financeiro/me/historico'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
+
+      print('FIN STATUS: ${res.statusCode}');
+      print('FIN HIST: ${hist.statusCode}');
 
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body);
 
         setState(() {
           dados = Map<String, dynamic>.from(json);
-          loading = false;
         });
-      } else {
-        setState(() => loading = false);
       }
+
+      if (hist.statusCode == 200) {
+        setState(() {
+          historico = jsonDecode(hist.body);
+        });
+      }
+
+      setState(() => loading = false);
+
     } catch (e) {
       print('ERRO FIN USER: $e');
       setState(() => loading = false);
@@ -71,8 +84,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
         return Colors.red;
       case 'pendente':
         return Colors.orange;
-      case 'sem mensalidade':
-        return Colors.grey;
       default:
         return Colors.grey;
     }
@@ -86,8 +97,6 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
         return 'Atrasado';
       case 'pendente':
         return 'Pendente';
-      case 'sem mensalidade':
-        return 'Sem mensalidade';
       default:
         return '---';
     }
@@ -123,65 +132,108 @@ class _FinanceiroScreenState extends State<FinanceiroScreen> {
         backgroundColor: Colors.amber,
         foregroundColor: Colors.black,
       ),
-      body: Center(
-        child: Card(
-          elevation: 4,
-          margin: EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Status',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+
+            // 🔥 CARD PRINCIPAL
+            Card(
+              elevation: 4,
+              margin: EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    Text('Status', style: TextStyle(fontWeight: FontWeight.bold)),
+
+                    SizedBox(height: 8),
+
+                    Text(
+                      textoStatus(status),
+                      style: TextStyle(
+                        fontSize: 22,
+                        color: corStatus(status),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    SizedBox(height: 16),
+
+                    Text('💰 Valor: R\$ $valor'),
+                    SizedBox(height: 8),
+
+                    Text('📅 Vencimento: ${formatarData(dados?['data_vencimento'])}'),
+                    SizedBox(height: 8),
+
+                    Text('📌 Plano: $plano'),
+
+                    if (status == 'atrasado') ...[
+                      SizedBox(height: 16),
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '⚠️ Vá até a recepção e renove sua mensalidade',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
+              ),
+            ),
 
-                SizedBox(height: 8),
-
-                Text(
-                  textoStatus(status),
+            // 🔥 HISTÓRICO
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Histórico',
                   style: TextStyle(
-                    fontSize: 22,
-                    color: corStatus(status),
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
-                SizedBox(height: 16),
-
-                Text('💰 Valor: R\$ $valor'),
-                SizedBox(height: 8),
-
-                Text(
-                  '📅 Vencimento: ${formatarData(dados?['data_vencimento'])}',
-                ),
-
-                SizedBox(height: 8),
-
-                Text('📌 Plano: $plano'),
-
-                SizedBox(height: 16),
-
-                if (status == 'atrasado')
-                  Container(
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '⚠️ Vá até a recepção e renove sua mensalidade',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
+
+            SizedBox(height: 10),
+
+            if (historico.isEmpty)
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: Text('Nenhum histórico encontrado'),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: historico.length,
+                itemBuilder: (_, i) {
+                  final h = historico[i];
+
+                  return ListTile(
+                    title: Text("R\$ ${h['valor']}"),
+                    subtitle: Text(
+                      "Vencimento: ${formatarData(h['vencimento'])}",
+                    ),
+                    trailing: Text(
+                      textoStatus(h['status']),
+                      style: TextStyle(color: corStatus(h['status'])),
+                    ),
+                  );
+                },
+              ),
+          ],
         ),
       ),
     );
