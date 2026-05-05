@@ -56,6 +56,26 @@ app.get('/', (req, res) => {
   res.send('API OK 🚀');
 });
 
+app.get('/init-db', async (req, res) => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS usuarios (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        senha TEXT NOT NULL,
+        username TEXT UNIQUE NOT NULL,
+        documento TEXT UNIQUE NOT NULL,
+        tipo TEXT NOT NULL
+      );
+    `);
+
+    res.send('Tabela criada com sucesso 🚀');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err.message);
+  }
+});
+
 app.use('/auth', authRoutes);
 app.use('/alunos', alunosRoutes);
 app.use('/usuarios', authMiddleware, usuariosRoutes);
