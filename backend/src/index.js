@@ -2,9 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-import logger from './logger.js';
+import logger from './logger.js'; // ✅ APENAS UMA IMPORTAÇÃO
 import morgan from 'morgan';
-import logger from '../src/logger.js';
 import pool from './db.js';
 
 import alunosRoutes from '../routes/alunosRoutes.js';
@@ -25,12 +24,20 @@ dotenv.config();
 
 const app = express();
 
+/**
+ * 🔥 CRON JOB
+ */
 cron.schedule('0 2 * * *', () => {
+  logger.info('Executando geração de mensalidades...');
   gerarMensalidades();
 });
 
+/**
+ * 🔥 MIDDLEWARES
+ */
 app.use(cors({ origin: '*' }));
 app.use(express.json());
+
 app.use(morgan('combined', {
   stream: {
     write: (message) => logger.info(message.trim())
@@ -45,34 +52,18 @@ app.get('/test-db', async (req, res) => {
     const result = await pool.query('SELECT NOW()');
     res.json({ success: true, time: result.rows[0] });
   } catch (err) {
-    logger.error(`ERRO: ${err.message}`);
+    logger.error(`ERRO DB: ${err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
 
 /**
- * 🔥 INIT COMPLETO DO BANCO
+ * 🔥 INIT DB
  */
 app.get('/init-full-db', async (req, res) => {
   try {
 
     await pool.query(`
-
-    CREATE TABLE IF NOT EXISTS usuarios (
-      id SERIAL PRIMARY KEY,
-      email TEXT UNIQUE,
-      senha TEXT,
-      username TEXT UNIQUE,
-      documento TEXT UNIQUE,
-      tipo TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS planos (
-      id SERIAL PRIMARY KEY,
-      name TEXT UNIQUE,
-      preco NUMERIC
-    );
-
     CREATE TABLE IF NOT EXISTS turmas (
       id SERIAL PRIMARY KEY,
       horario VARCHAR(20) UNIQUE,
@@ -80,107 +71,6 @@ app.get('/init-full-db', async (req, res) => {
       tipo VARCHAR(20),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-
-    CREATE TABLE IF NOT EXISTS alunos (
-      id SERIAL PRIMARY KEY,
-      nome TEXT,
-      telefone TEXT,
-      status TEXT DEFAULT 'ativo',
-      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      email TEXT,
-      documento TEXT,
-      endereco TEXT,
-      modalidade TEXT,
-      dia_semana VARCHAR(50),
-      horario VARCHAR(20),
-      professor VARCHAR(50),
-      sexo VARCHAR(20),
-      usuario_id INT,
-      tipo TEXT,
-      plano_id INT
-    );
-
-    CREATE TABLE IF NOT EXISTS aulas (
-      id SERIAL PRIMARY KEY,
-      data DATE,
-      horario VARCHAR(20),
-      professor VARCHAR(100),
-      modalidade VARCHAR(50)
-    );
-
-    CREATE TABLE IF NOT EXISTS inscricoes (
-      id SERIAL PRIMARY KEY,
-      aluno_id INT,
-      turma_id INT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS mensalidades (
-      id SERIAL PRIMARY KEY,
-      aluno_id INT,
-      valor NUMERIC,
-      data_vencimento DATE,
-      data_pagamento TIMESTAMP,
-      status VARCHAR(20),
-      metodo_pagamento VARCHAR(20),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS pagamentos (
-      id SERIAL PRIMARY KEY,
-      aluno_id INT,
-      valor NUMERIC,
-      data_vencimento DATE,
-      status TEXT,
-      pago_em TIMESTAMP,
-      mensalidade_id INT,
-      valor_pago NUMERIC,
-      data_pagamento TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS presencas (
-      id SERIAL PRIMARY KEY,
-      aluno_id INT,
-      data DATE,
-      turma_id INT
-    );
-
-    CREATE TABLE IF NOT EXISTS rachas (
-      id SERIAL PRIMARY KEY,
-      data DATE,
-      hora VARCHAR(20),
-      local VARCHAR(100),
-      quadra VARCHAR(50),
-      limite INT,
-      tipo VARCHAR(20),
-      criado_por INT
-    );
-
-    CREATE TABLE IF NOT EXISTS racha_jogadores (
-      id SERIAL PRIMARY KEY,
-      racha_id INT,
-      aluno_id INT
-    );
-
-    CREATE TABLE IF NOT EXISTS notificacoes (
-      id SERIAL PRIMARY KEY,
-      aluno_id INT,
-      mensagem TEXT,
-      tipo TEXT,
-      enviado_em TIMESTAMP
-    );
-
-    `);
-
-    /**
-     * 🔥 DADOS FIXOS (SEM DUPLICAR)
-     */
-    await pool.query(`
-      INSERT INTO planos (name, preco) VALUES
-      ('Futevôlei 2x semana', 150),
-      ('Beach Tennis ilimitado', 200),
-      ('Vôlei básico', 120)
-      ON CONFLICT (name) DO NOTHING;
     `);
 
     await pool.query(`
@@ -194,10 +84,12 @@ app.get('/init-full-db', async (req, res) => {
       ON CONFLICT (horario) DO NOTHING;
     `);
 
-    res.send('🔥 BANCO CRIADO SEM DUPLICAÇÃO');
+    logger.info('Banco inicializado com sucesso');
+
+    res.send('🔥 BANCO OK');
 
   } catch (err) {
-    logger.error(`ERRO: ${err.message}`);
+    logger.error(`ERRO INIT: ${err.message}`);
     res.status(500).send(err.message);
   }
 });
@@ -222,12 +114,9 @@ app.use('/presencas', authMiddleware, bloquearInadimplente, presencasRoutes);
 app.use('/rachas', authMiddleware, bloquearInadimplente, rachaRoutes);
 app.use('/aulas', authMiddleware, bloquearInadimplente, aulasRoutes);
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
-
+/**
+ * 🔥 ERRO GLOBAL
+ */
 app.use((err, req, res, next) => {
   logger.error(`
   🔥 ERRO GLOBAL:
@@ -240,4 +129,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     erro: 'Erro interno do servidor'
   });
+});
+
+/**
+ * 🚀 START SERVER
+ */
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  logger.info(`Servidor rodando na porta ${PORT}`);
 });
