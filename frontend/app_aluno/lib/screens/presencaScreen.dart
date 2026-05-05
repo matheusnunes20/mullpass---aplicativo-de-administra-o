@@ -15,7 +15,6 @@ class PresencaScreen extends StatefulWidget {
 
 class _PresencaScreenState extends State<PresencaScreen> {
 
-  // ✅ BASE URL CORRETA
   final String baseUrl =
       "https://mullpass-aplicativo-de-administra-o.onrender.com";
 
@@ -39,9 +38,6 @@ class _PresencaScreenState extends State<PresencaScreen> {
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
-      print('TURMAS STATUS: ${res.statusCode}');
-      print('TURMAS BODY: ${res.body}');
-
       if (res.statusCode == 200) {
         setState(() {
           turmas = jsonDecode(res.body);
@@ -52,15 +48,13 @@ class _PresencaScreenState extends State<PresencaScreen> {
     }
   }
 
+  // ✅ CORRIGIDO
   Future<void> carregarPresencaHoje() async {
     try {
       final res = await http.get(
-        Uri.parse('$baseUrl/presencas/hoje'),
+        Uri.parse('$baseUrl/presencas/me/hoje'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
-
-      print('HOJE STATUS: ${res.statusCode}');
-      print('HOJE BODY: ${res.body}');
 
       if (res.statusCode == 200 && res.body != 'null') {
         final data = jsonDecode(res.body);
@@ -78,10 +72,11 @@ class _PresencaScreenState extends State<PresencaScreen> {
     }
   }
 
+  // ✅ CORRIGIDO
   Future<void> confirmarPresenca() async {
     try {
       final res = await http.post(
-        Uri.parse('$baseUrl/presencas/confirmar'),
+        Uri.parse('$baseUrl/presencas'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json'
@@ -90,9 +85,6 @@ class _PresencaScreenState extends State<PresencaScreen> {
           'turma_id': turmaSelecionada,
         }),
       );
-
-      print('CONFIRMAR STATUS: ${res.statusCode}');
-      print('CONFIRMAR BODY: ${res.body}');
 
       if (res.statusCode == 201) {
         final turma =
@@ -106,21 +98,21 @@ class _PresencaScreenState extends State<PresencaScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Presença confirmada')),
         );
+      } else {
+        print('ERRO BACKEND: ${res.body}');
       }
     } catch (e) {
       print('ERRO CONFIRMAR: $e');
     }
   }
 
+  // ✅ CORRIGIDO
   Future<void> removerPresenca() async {
     try {
       final res = await http.delete(
-        Uri.parse('$baseUrl/presencas/remover'),
+        Uri.parse('$baseUrl/presencas'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
-
-      print('REMOVER STATUS: ${res.statusCode}');
-      print('REMOVER BODY: ${res.body}');
 
       if (res.statusCode == 200) {
         setState(() {
@@ -132,6 +124,8 @@ class _PresencaScreenState extends State<PresencaScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Presença cancelada')),
         );
+      } else {
+        print('ERRO REMOVER: ${res.body}');
       }
     } catch (e) {
       print('ERRO REMOVER: $e');
