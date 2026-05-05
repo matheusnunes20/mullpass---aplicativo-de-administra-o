@@ -23,7 +23,7 @@ dotenv.config();
 const app = express();
 
 /**
- * 🔥 CRON JOB
+ * 🔥 CRON
  */
 cron.schedule('0 2 * * *', () => {
   console.log('Executando geração de mensalidades...');
@@ -37,7 +37,17 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 /**
- * 🔥 TESTE DE BANCO
+ * 🔥 DEBUG USER (MUITO IMPORTANTE)
+ */
+app.use((req, res, next) => {
+  if (req.headers.authorization) {
+    console.log('REQ AUTH HEADER:', req.headers.authorization);
+  }
+  next();
+});
+
+/**
+ * 🔥 TESTE DB
  */
 app.get('/test-db', async (req, res) => {
   try {
@@ -47,48 +57,6 @@ app.get('/test-db', async (req, res) => {
     console.error('ERRO DB:', err.message);
     res.status(500).json({ error: err.message });
   }
-});
-
-/**
- * 🔥 INIT DB
- */
-app.get('/init-full-db', async (req, res) => {
-  try {
-    await pool.query(`
-    CREATE TABLE IF NOT EXISTS turmas (
-      id SERIAL PRIMARY KEY,
-      horario VARCHAR(20) UNIQUE,
-      limite INT,
-      tipo VARCHAR(20),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    `);
-
-    await pool.query(`
-      INSERT INTO turmas (horario, limite, tipo) VALUES
-      ('06:00-07:00', 7, 'mista'),
-      ('07:00-08:00', 3, 'mista'),
-      ('18:00-19:00', 6, 'feminina'),
-      ('19:00-20:00', 10, 'mista'),
-      ('20:00-21:00', 8, 'mista'),
-      ('21:00-22:00', 6, 'mista')
-      ON CONFLICT (horario) DO NOTHING;
-    `);
-
-    console.log('Banco inicializado com sucesso');
-
-    res.send('🔥 BANCO OK');
-  } catch (err) {
-    console.error('ERRO INIT:', err.message);
-    res.status(500).send(err.message);
-  }
-});
-
-/**
- * 🔥 ROOT
- */
-app.get('/', (req, res) => {
-  res.send('API OK 🚀');
 });
 
 /**
@@ -108,22 +76,10 @@ app.use('/aulas', authMiddleware, bloquearInadimplente, aulasRoutes);
  * 🔥 ERRO GLOBAL
  */
 app.use((err, req, res, next) => {
-  console.error(`
-  🔥 ERRO GLOBAL:
-  URL: ${req.originalUrl}
-  METHOD: ${req.method}
-  BODY: ${JSON.stringify(req.body)}
-  ERROR: ${err.message}
-  `);
-
-  res.status(500).json({
-    erro: 'Erro interno do servidor'
-  });
+  console.error('ERRO GLOBAL:', err.message);
+  res.status(500).json({ erro: 'Erro interno do servidor' });
 });
 
-/**
- * 🚀 START SERVER
- */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
