@@ -27,7 +27,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/logomullpass.png
+    - assets/logoMull.png
 
 flutter_icons:
   android: true
