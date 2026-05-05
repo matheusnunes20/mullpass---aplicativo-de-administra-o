@@ -24,6 +24,8 @@ class _PresencaScreenState extends State<PresencaScreen> {
   bool confirmou = false;
   String horarioConfirmado = '';
 
+  bool carregando = false;
+
   @override
   void initState() {
     super.initState();
@@ -32,103 +34,90 @@ class _PresencaScreenState extends State<PresencaScreen> {
   }
 
   Future<void> carregarTurmas() async {
-    try {
-      final res = await http.get(
-        Uri.parse('$baseUrl/presencas/turmas'),
-        headers: {'Authorization': 'Bearer ${widget.token}'},
-      );
+    final res = await http.get(
+      Uri.parse('$baseUrl/presencas/turmas'),
+      headers: {'Authorization': 'Bearer ${widget.token}'},
+    );
 
-      if (res.statusCode == 200) {
-        setState(() {
-          turmas = jsonDecode(res.body);
-        });
-      }
-    } catch (e) {
-      print('ERRO TURMAS: $e');
+    if (res.statusCode == 200) {
+      setState(() {
+        turmas = jsonDecode(res.body);
+      });
     }
   }
 
-  // ✅ CORRIGIDO
   Future<void> carregarPresencaHoje() async {
-    try {
-      final res = await http.get(
-        Uri.parse('$baseUrl/presencas/me/hoje'),
-        headers: {'Authorization': 'Bearer ${widget.token}'},
-      );
+    final res = await http.get(
+      Uri.parse('$baseUrl/presencas/me/hoje'),
+      headers: {'Authorization': 'Bearer ${widget.token}'},
+    );
 
-      if (res.statusCode == 200 && res.body != 'null') {
-        final data = jsonDecode(res.body);
+    if (res.statusCode == 200 && res.body != 'null') {
+      final data = jsonDecode(res.body);
 
-        if (data != null) {
-          setState(() {
-            confirmou = true;
-            turmaSelecionada = data['id'];
-            horarioConfirmado = data['horario'];
-          });
-        }
-      }
-    } catch (e) {
-      print('ERRO HOJE: $e');
-    }
-  }
-
-  // ✅ CORRIGIDO
-  Future<void> confirmarPresenca() async {
-    try {
-      final res = await http.post(
-        Uri.parse('$baseUrl/presencas'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json'
-        },
-        body: jsonEncode({
-          'turma_id': turmaSelecionada,
-        }),
-      );
-
-      if (res.statusCode == 201) {
-        final turma =
-            turmas.firstWhere((t) => t['id'] == turmaSelecionada);
-
+      if (data != null) {
         setState(() {
           confirmou = true;
-          horarioConfirmado = turma['horario'];
+          turmaSelecionada = data['id'];
+          horarioConfirmado = data['horario'];
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Presença confirmada')),
-        );
-      } else {
-        print('ERRO BACKEND: ${res.body}');
       }
-    } catch (e) {
-      print('ERRO CONFIRMAR: $e');
     }
   }
 
-  // ✅ CORRIGIDO
-  Future<void> removerPresenca() async {
-    try {
-      final res = await http.delete(
-        Uri.parse('$baseUrl/presencas'),
-        headers: {'Authorization': 'Bearer ${widget.token}'},
+  Future<void> confirmarPresenca() async {
+    if (turmaSelecionada == null) return;
+
+    setState(() => carregando = true);
+
+    final res = await http.post(
+      Uri.parse('$baseUrl/presencas'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json'
+      },
+      body: jsonEncode({
+        'turma_id': turmaSelecionada,
+      }),
+    );
+
+    setState(() => carregando = false);
+
+    if (res.statusCode == 201) {
+      final turma =
+          turmas.firstWhere((t) => t['id'] == turmaSelecionada);
+
+      setState(() {
+        confirmou = true;
+        horarioConfirmado = turma['horario'];
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Presença confirmada')),
       );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro: ${res.body}')),
+      );
+    }
+  }
 
-      if (res.statusCode == 200) {
-        setState(() {
-          confirmou = false;
-          turmaSelecionada = null;
-          horarioConfirmado = '';
-        });
+  Future<void> removerPresenca() async {
+    final res = await http.delete(
+      Uri.parse('$baseUrl/presencas'),
+      headers: {'Authorization': 'Bearer ${widget.token}'},
+    );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Presença cancelada')),
-        );
-      } else {
-        print('ERRO REMOVER: ${res.body}');
-      }
-    } catch (e) {
-      print('ERRO REMOVER: $e');
+    if (res.statusCode == 200) {
+      setState(() {
+        confirmou = false;
+        turmaSelecionada = null;
+        horarioConfirmado = '';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Presença cancelada')),
+      );
     }
   }
 
@@ -141,41 +130,16 @@ class _PresencaScreenState extends State<PresencaScreen> {
         title: Text('Presença'),
         backgroundColor: Colors.amber,
         foregroundColor: Colors.black,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.history),
-            tooltip: 'Ver histórico',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      HistoricoScreen(token: widget.token),
-                ),
-              );
-            },
-          )
-        ],
       ),
 
       body: Padding(
         padding: EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.nome,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            SizedBox(height: 20),
 
             DropdownButtonFormField<int>(
               value: turmaSelecionada,
-              hint: Text('Escolher turma hoje'),
+              hint: Text('Escolher turma'),
               items: turmas.map<DropdownMenuItem<int>>((t) {
                 return DropdownMenuItem<int>(
                   value: t['id'],
@@ -184,60 +148,27 @@ class _PresencaScreenState extends State<PresencaScreen> {
               }).toList(),
               onChanged: confirmou
                   ? null
-                  : (v) {
-                      setState(() {
-                        turmaSelecionada = v;
-                      });
-                    },
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+                  : (v) => setState(() => turmaSelecionada = v),
             ),
 
-            SizedBox(height: 15),
+            SizedBox(height: 20),
 
             if (confirmou)
               Text(
-                'Presença confirmada: $horarioConfirmado',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
+                'Confirmado: $horarioConfirmado',
+                style: TextStyle(color: Colors.green),
               ),
 
             Spacer(),
 
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: (confirmou || turmaSelecionada == null)
-                    ? null
-                    : confirmarPresenca,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text('Confirmar Presença'),
-              ),
+            ElevatedButton(
+              onPressed: (confirmou || turmaSelecionada == null || carregando)
+                  ? null
+                  : confirmarPresenca,
+              child: carregando
+                  ? CircularProgressIndicator(color: Colors.white)
+                  : Text('Confirmar Presença'),
             ),
-
-            SizedBox(height: 10),
-
-            if (confirmou)
-              Center(
-                child: TextButton(
-                  onPressed: removerPresenca,
-                  child: Text(
-                    'Cancelar presença',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
