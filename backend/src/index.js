@@ -326,3 +326,25 @@ PORTA: ${PORT}
 `);
   }
 );
+
+app.get('/debug-colunas', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(`
+
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'notificacoes'
+
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    res.status(500).json({
+      erro: err.message
+    });
+  }
+});
