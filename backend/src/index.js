@@ -358,3 +358,18 @@ app.get('/debug-db', async (req, res) => {
   res.json(db.rows);
 
 });
+
+app.get('/debug-colunas', async (req, res) => {
+
+  const result = await pool.query(`
+
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'notificacoes'
+
+  `);
+
+  res.json(result.rows);
+
+});
