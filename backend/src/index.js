@@ -348,3 +348,13 @@ app.get('/debug-colunas', async (req, res) => {
     });
   }
 });
+
+app.get('/debug-db', async (req, res) => {
+
+  const db = await pool.query(
+    'SELECT current_database()'
+  );
+
+  res.json(db.rows);
+
+});
