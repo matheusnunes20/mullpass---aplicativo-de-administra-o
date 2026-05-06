@@ -5,6 +5,7 @@ import 'loginScreen.dart';
 import 'dart:convert';
 import 'createAlunoScreen.dart';
 import 'alunoDetalheScreen.dart';
+import '../config/api.dart';
 
 class HomeScreen extends StatefulWidget {
   final String token;
@@ -19,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   List alunos = [];
   Map user = {};

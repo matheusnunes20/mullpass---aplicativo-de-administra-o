@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'rachaPlayersScreen.dart';
 import 'createRachaScreen.dart';
+import '../config/api.dart';
 
 class RachaScreen extends StatefulWidget {
   final String token;
@@ -18,7 +19,7 @@ class _RachaScreenState extends State<RachaScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   List rachas = [];
 

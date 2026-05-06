@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'completarAlunoScreen.dart';
+import '../config/api.dart';
 
 class CreateAlunoScreen extends StatefulWidget {
   @override
@@ -14,7 +15,7 @@ class _CreateAlunoScreenState extends State<CreateAlunoScreen> {
 
   // ✅ BASE URL CENTRALIZADA
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   final nomeController = TextEditingController();
   final telefoneController = TextEditingController();

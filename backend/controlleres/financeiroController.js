@@ -296,38 +296,74 @@ export const meuHistoricoFinanceiro = async (req, res) => {
  */
 export const relatorioFinanceiro = async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        CASE
-          WHEN EXISTS (
-            SELECT 1 FROM pagamentos pg 
-            WHERE pg.mensalidade_id = m.id
-          ) THEN 'pago'
-          WHEN m.data_vencimento < CURRENT_DATE THEN 'atrasado'
-          ELSE 'pendente'
-        END as status,
-        COUNT(*) as total,
-        SUM(valor) as valor_total
+
+    /**
+     * 🟢 PAGOS
+     */
+    const pagos = await pool.query(`
+      SELECT COUNT(*) as total
       FROM mensalidades m
-      GROUP BY status
+      WHERE EXISTS (
+        SELECT 1 FROM pagamentos pg
+        WHERE pg.mensalidade_id = m.id
+      )
     `);
 
-    const totalMes = await pool.query(`
-      SELECT SUM(valor) as total
+    /**
+     * 🔴 ATRASADOS
+     */
+    const atrasados = await pool.query(`
+      SELECT COUNT(*) as total
+      FROM mensalidades m
+      WHERE m.data_vencimento < CURRENT_DATE
+      AND NOT EXISTS (
+        SELECT 1 FROM pagamentos pg
+        WHERE pg.mensalidade_id = m.id
+      )
+    `);
+
+    /**
+     * 🟡 PENDENTES
+     */
+    const pendentes = await pool.query(`
+      SELECT COUNT(*) as total
+      FROM mensalidades m
+      WHERE m.data_vencimento >= CURRENT_DATE
+      AND NOT EXISTS (
+        SELECT 1 FROM pagamentos pg
+        WHERE pg.mensalidade_id = m.id
+      )
+    `);
+
+    /**
+     * 💰 FATURAMENTO MÊS
+     */
+    const faturamento = await pool.query(`
+      SELECT COALESCE(SUM(valor_pago), 0) as total
       FROM pagamentos
-      WHERE DATE_TRUNC('month', data_pagamento) = DATE_TRUNC('month', CURRENT_DATE)
+      WHERE DATE_TRUNC('month', data_pagamento)
+      = DATE_TRUNC('month', CURRENT_DATE)
     `);
 
     res.json({
-      por_status: result.rows,
-      faturamento_mes: totalMes.rows[0].total || 0
+      faturamento_mes: Number(faturamento.rows[0].total),
+
+      pagos: Number(pagos.rows[0].total),
+
+      pendentes: Number(pendentes.rows[0].total),
+
+      atrasados: Number(atrasados.rows[0].total),
     });
 
   } catch (err) {
     console.error('ERRO RELATORIO:', err);
-    res.status(500).json({ erro: err.message });
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
+
 
 /**
  * 🔴 INADIMPLENTES (COM TELEFONE)

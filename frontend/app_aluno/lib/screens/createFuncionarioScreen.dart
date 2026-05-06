@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'loginScreen.dart';
+import '../config/api.dart';
 
 class CreateFuncionarioScreen extends StatefulWidget {
   @override
@@ -15,7 +16,7 @@ class _CreateFuncionarioScreenState extends State<CreateFuncionarioScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   final nomeController = TextEditingController();
   final emailController = TextEditingController();

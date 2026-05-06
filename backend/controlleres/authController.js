@@ -35,7 +35,18 @@ export const register = async (req, res) => {
 
     // 🔥 VALIDAÇÃO FUNCIONÁRIO
     if (tipoFinal === 'funcionario') {
-      if (codigo !== 'ARENAMULLBEACH') {
+      const codigoValido =
+    await bcrypt.compare(
+      codigo,
+      process.env.CODIGO_FUNC_HASH
+    );
+
+      if (!codigoValido) {
+
+        return res.status(403).json({
+          erro: 'Código inválido'
+        });
+      } {
         return res.status(403).json({
           erro: 'Código inválido'
         });

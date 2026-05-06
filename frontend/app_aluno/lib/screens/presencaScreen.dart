@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'HistoricoScreen.dart';
+import '../config/api.dart';
 
 class PresencaScreen extends StatefulWidget {
   final String token;
@@ -16,7 +17,7 @@ class PresencaScreen extends StatefulWidget {
 class _PresencaScreenState extends State<PresencaScreen> {
 
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   List turmas = [];
   int? turmaSelecionada;

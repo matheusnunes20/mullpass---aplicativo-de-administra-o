@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'loginScreen.dart';
+import '../config/api.dart';
+
 
 class CompletarAlunoScreen extends StatefulWidget {
   final int usuarioId;
@@ -26,7 +28,7 @@ class CompletarAlunoScreen extends StatefulWidget {
 class _CompletarAlunoScreenState extends State<CompletarAlunoScreen> {
 
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   final ruaController = TextEditingController();
   final numeroController = TextEditingController();

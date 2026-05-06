@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart'; // ✅ NOVO
+import '../config/api.dart';
 
 class InadimplentesScreen extends StatefulWidget {
   final String token;
@@ -14,7 +15,7 @@ class InadimplentesScreen extends StatefulWidget {
 
 class _InadimplentesScreenState extends State<InadimplentesScreen> {
 
-  final String baseUrl = "http://10.0.2.2:3000";
+  final String baseUrl = Api.baseUrl;
 
   List inadimplentes = [];
   bool loading = true;

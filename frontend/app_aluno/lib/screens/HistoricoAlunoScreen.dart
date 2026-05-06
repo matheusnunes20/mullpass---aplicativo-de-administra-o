@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../config/api.dart';
 
 class HistoricoAlunoScreen extends StatefulWidget {
   final String token;
@@ -22,7 +23,7 @@ class _HistoricoAlunoScreenState extends State<HistoricoAlunoScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   List historico = [];
   bool loading = true;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import '../config/api.dart';
 
 class FinanceiroScreen extends StatefulWidget {
   final String token;
@@ -14,7 +15,7 @@ class FinanceiroScreen extends StatefulWidget {
 
 class _FinanceiroScreenState extends State<FinanceiroScreen> {
 
-  final String baseUrl = "http://10.0.2.2:3000";
+  final String baseUrl = Api.baseUrl;
 
   Map<String, dynamic>? dados;
   List historico = [];

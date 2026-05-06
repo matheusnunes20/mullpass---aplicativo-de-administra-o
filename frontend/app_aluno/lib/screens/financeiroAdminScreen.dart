@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../config/api.dart';
 import 'package:intl/intl.dart';
 
 class FinanceiroAdminScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   List<Map<String, dynamic>> alunos = [];
   bool loading = true;

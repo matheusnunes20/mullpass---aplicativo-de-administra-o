@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../config/api.dart';
 
 class FinanceiroRelatorioScreen extends StatefulWidget {
   final String token;
@@ -15,7 +16,7 @@ class FinanceiroRelatorioScreen extends StatefulWidget {
 class _FinanceiroRelatorioScreenState
     extends State<FinanceiroRelatorioScreen> {
 
-  final String baseUrl = "http://10.0.2.2:3000";
+  final String baseUrl = Api.baseUrl;
 
   bool loading = true;
 
@@ -49,12 +50,11 @@ class _FinanceiroRelatorioScreenState
             double.tryParse(json['faturamento_mes'].toString()) ?? 0;
 
         // 📊 status
-        for (var item in json['por_status']) {
-          final status = item['status'];
-          final total = int.tryParse(item['total'].toString()) ?? 0;
+          statusMap['pago'] = json['pagos'] ?? 0;
 
-          statusMap[status] = total;
-        }
+          statusMap['pendente'] = json['pendentes'] ?? 0;
+
+          statusMap['atrasado'] = json['atrasados'] ?? 0;
       }
 
       setState(() => loading = false);

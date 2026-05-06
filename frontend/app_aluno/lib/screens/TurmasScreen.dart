@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'turmaPresencaScreen.dart';
+import '../config/api.dart';
 
 class TurmasScreen extends StatefulWidget {
   final String token;
@@ -16,7 +17,7 @@ class _TurmasScreenState extends State<TurmasScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   List turmas = [];
   Map? minhaTurma;

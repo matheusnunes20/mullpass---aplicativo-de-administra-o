@@ -1,21 +1,92 @@
 import express from 'express';
+
 import {
   confirmarPresenca,
-  historicoPorAluno
+  listarPresencaPorTurma,
+  listarTurmas,
+  minhaTurma,
+  minhaPresencaHoje,
+  meuHistorico,
+  historicoPorAluno,
+  minhaFrequencia
 } from '../controlleres/presencasController.js';
 
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import {
+  authMiddleware
+} from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 /**
- * 📌 CONFIRMAR PRESENÇA
+ * ✅ CONFIRMAR PRESENÇA
  */
-router.post('/', authMiddleware, confirmarPresenca);
+router.post(
+  '/',
+  authMiddleware,
+  confirmarPresenca
+);
 
 /**
- * 📌 HISTÓRICO POR ALUNO
+ * 📚 LISTAR TURMAS
  */
-router.get('/aluno/:id/historico', authMiddleware, historicoPorAluno);
+router.get(
+  '/turmas',
+  authMiddleware,
+  listarTurmas
+);
+
+/**
+ * 👤 MINHA TURMA
+ */
+router.get(
+  '/minha-turma',
+  authMiddleware,
+  minhaTurma
+);
+
+/**
+ * 📅 PRESENÇA HOJE
+ */
+router.get(
+  '/hoje',
+  authMiddleware,
+  minhaPresencaHoje
+);
+
+/**
+ * 📜 MEU HISTÓRICO
+ */
+router.get(
+  '/historico',
+  authMiddleware,
+  meuHistorico
+);
+
+/**
+ * 📊 MINHA FREQUÊNCIA
+ */
+router.get(
+  '/me/frequencia',
+  authMiddleware,
+  minhaFrequencia
+);
+
+/**
+ * 👨‍💼 HISTÓRICO POR ALUNO
+ */
+router.get(
+  '/aluno/:id/historico',
+  authMiddleware,
+  historicoPorAluno
+);
+
+/**
+ * 📋 LISTAR PRESENÇAS POR TURMA
+ */
+router.get(
+  '/turma/:turma_id',
+  authMiddleware,
+  listarPresencaPorTurma
+);
 
 export default router;

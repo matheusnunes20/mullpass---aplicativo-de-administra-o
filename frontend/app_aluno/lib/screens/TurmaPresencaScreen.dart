@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'HistoricoAlunoScreen.dart';
+import '../config/api.dart';
 
 class TurmaPresencaScreen extends StatefulWidget {
   final String token;
@@ -23,7 +24,7 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
 
   // ✅ BASE URL CORRETA
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   List lista = [];
   bool loading = true;

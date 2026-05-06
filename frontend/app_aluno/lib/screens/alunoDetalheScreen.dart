@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../config/api.dart';
 
 class AlunoDetalheScreen extends StatefulWidget {
   final int alunoId;
@@ -18,7 +19,7 @@ class _AlunoDetalheScreenState extends State<AlunoDetalheScreen> {
 
   // ✅ BASE URL CENTRALIZADA
   final String baseUrl =
-      "http://10.0.2.2:3000";
+      Api.baseUrl;
 
   @override
   void initState() {
