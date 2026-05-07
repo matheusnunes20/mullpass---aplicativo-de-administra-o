@@ -1,5 +1,4 @@
 import express from 'express';
-
 import {
   confirmarPresenca,
   listarPresencaPorTurma,
@@ -8,7 +7,8 @@ import {
   minhaPresencaHoje,
   meuHistorico,
   historicoPorAluno,
-  minhaFrequencia
+  minhaFrequencia,
+  cancelarPresenca
 } from '../controlleres/presencasController.js';
 
 import {
@@ -24,6 +24,15 @@ router.post(
   '/',
   authMiddleware,
   confirmarPresenca
+);
+
+/**
+ * ❌ CANCELAR PRESENÇA
+ */
+router.delete(
+  '/',
+  authMiddleware,
+  cancelarPresenca
 );
 
 /**

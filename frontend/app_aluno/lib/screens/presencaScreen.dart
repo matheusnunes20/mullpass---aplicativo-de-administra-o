@@ -1,175 +1,592 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
 import 'HistoricoScreen.dart';
 import '../config/api.dart';
 
 class PresencaScreen extends StatefulWidget {
+
   final String token;
   final String nome;
 
-  PresencaScreen({required this.token, required this.nome});
+  PresencaScreen({
+    required this.token,
+    required this.nome,
+  });
 
   @override
-  _PresencaScreenState createState() => _PresencaScreenState();
+  _PresencaScreenState createState() =>
+      _PresencaScreenState();
 }
 
-class _PresencaScreenState extends State<PresencaScreen> {
+class _PresencaScreenState
+    extends State<PresencaScreen> {
 
   final String baseUrl =
       Api.baseUrl;
 
   List turmas = [];
+
   int? turmaSelecionada;
 
   bool confirmou = false;
+
   String horarioConfirmado = '';
 
   bool carregando = false;
 
   @override
   void initState() {
+
     super.initState();
+
     carregarTurmas();
-    carregarPresencaHoje();
   }
 
+  /**
+   * 📚 CARREGAR TURMAS
+   */
   Future<void> carregarTurmas() async {
+
     final res = await http.get(
-      Uri.parse('$baseUrl/presencas/turmas'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
+
+      Uri.parse(
+        '$baseUrl/presencas/turmas',
+      ),
+
+      headers: {
+        'Authorization':
+            'Bearer ${widget.token}'
+      },
     );
 
     if (res.statusCode == 200) {
+
+      final data =
+          jsonDecode(res.body);
+
       setState(() {
-        turmas = jsonDecode(res.body);
+        turmas = data;
       });
+
+      // 🔥 depois de carregar turmas
+      // verifica presença do dia
+      carregarPresencaHoje();
     }
   }
 
+  /**
+   * 📅 PRESENÇA DE HOJE
+   */
   Future<void> carregarPresencaHoje() async {
+
     final res = await http.get(
-      Uri.parse('$baseUrl/presencas/me/hoje'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
+
+      Uri.parse(
+        '$baseUrl/presencas/hoje',
+      ),
+
+      headers: {
+        'Authorization':
+            'Bearer ${widget.token}'
+      },
     );
 
-    if (res.statusCode == 200 && res.body != 'null') {
-      final data = jsonDecode(res.body);
+    if (res.statusCode == 200) {
 
-      if (data != null) {
+      final data =
+          jsonDecode(res.body);
+
+      if (data != null &&
+          data is List &&
+          data.isNotEmpty) {
+
+        final presenca =
+            data[0];
+
+        final turma =
+            turmas.firstWhere(
+
+          (t) =>
+              t['id'] ==
+              presenca['turma_id'],
+
+          orElse: () => null,
+        );
+
         setState(() {
+
           confirmou = true;
-          turmaSelecionada = data['id'];
-          horarioConfirmado = data['horario'];
+
+          turmaSelecionada =
+              presenca['turma_id'];
+
+          horarioConfirmado =
+              turma != null
+                  ? turma['horario']
+                  : '';
         });
       }
     }
   }
 
+  /**
+   * ✅ CONFIRMAR
+   */
   Future<void> confirmarPresenca() async {
-    if (turmaSelecionada == null) return;
 
-    setState(() => carregando = true);
+    if (turmaSelecionada == null)
+      return;
+
+    setState(() {
+      carregando = true;
+    });
 
     final res = await http.post(
-      Uri.parse('$baseUrl/presencas'),
+
+      Uri.parse(
+        '$baseUrl/presencas',
+      ),
+
       headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json'
+
+        'Authorization':
+            'Bearer ${widget.token}',
+
+        'Content-Type':
+            'application/json',
       },
+
       body: jsonEncode({
-        'turma_id': turmaSelecionada,
+
+        'turma_id':
+            turmaSelecionada,
       }),
     );
 
-    setState(() => carregando = false);
+    setState(() {
+      carregando = false;
+    });
 
     if (res.statusCode == 201) {
+
       final turma =
-          turmas.firstWhere((t) => t['id'] == turmaSelecionada);
+          turmas.firstWhere(
+        (t) =>
+            t['id'] ==
+            turmaSelecionada,
+      );
 
       setState(() {
+
         confirmou = true;
-        horarioConfirmado = turma['horario'];
+
+        horarioConfirmado =
+            turma['horario'];
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Presença confirmada')),
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        SnackBar(
+          content: Text(
+            'Presença confirmada',
+          ),
+        ),
       );
+
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: ${res.body}')),
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        SnackBar(
+          content: Text(
+            'Erro: ${res.body}',
+          ),
+        ),
       );
     }
   }
 
+  /**
+   * ❌ CANCELAR
+   */
   Future<void> removerPresenca() async {
+
     final res = await http.delete(
-      Uri.parse('$baseUrl/presencas'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
+
+      Uri.parse(
+        '$baseUrl/presencas',
+      ),
+
+      headers: {
+        'Authorization':
+            'Bearer ${widget.token}'
+      },
     );
 
     if (res.statusCode == 200) {
+
       setState(() {
+
         confirmou = false;
+
         turmaSelecionada = null;
+
         horarioConfirmado = '';
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Presença cancelada')),
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        SnackBar(
+          content: Text(
+            'Presença cancelada',
+          ),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+
+      backgroundColor:
+          Colors.grey[100],
 
       appBar: AppBar(
+
         title: Text('Presença'),
-        backgroundColor: Colors.amber,
-        foregroundColor: Colors.black,
+
+        backgroundColor:
+            Colors.amber,
+
+        foregroundColor:
+            Colors.black,
+
+        elevation: 0,
+
+        actions: [
+
+          IconButton(
+
+            icon: Icon(
+              Icons.history,
+            ),
+
+            onPressed: () {
+
+              Navigator.push(
+
+                context,
+
+                MaterialPageRoute(
+
+                  builder: (_) =>
+                      HistoricoScreen(
+                    token:
+                        widget.token,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
 
       body: Padding(
-        padding: EdgeInsets.all(20),
+
+        padding:
+            EdgeInsets.all(20),
+
         child: Column(
+
+          crossAxisAlignment:
+              CrossAxisAlignment
+                  .stretch,
+
           children: [
 
-            DropdownButtonFormField<int>(
-              value: turmaSelecionada,
-              hint: Text('Escolher turma'),
-              items: turmas.map<DropdownMenuItem<int>>((t) {
-                return DropdownMenuItem<int>(
-                  value: t['id'],
-                  child: Text('Horário: ${t['horario']}'),
-                );
-              }).toList(),
-              onChanged: confirmou
-                  ? null
-                  : (v) => setState(() => turmaSelecionada = v),
-            ),
+            Container(
 
-            SizedBox(height: 20),
+              padding:
+                  EdgeInsets.all(18),
 
-            if (confirmou)
-              Text(
-                'Confirmado: $horarioConfirmado',
-                style: TextStyle(color: Colors.green),
+              decoration:
+                  BoxDecoration(
+
+                color: Colors.white,
+
+                borderRadius:
+                    BorderRadius
+                        .circular(18),
+
+                boxShadow: [
+
+                  BoxShadow(
+
+                    color: Colors.black12,
+
+                    blurRadius: 8,
+
+                    offset:
+                        Offset(0, 3),
+                  ),
+                ],
               ),
+
+              child: Column(
+
+                children: [
+
+                  DropdownButtonFormField<int>(
+
+                    value:
+                        turmaSelecionada,
+
+                    decoration:
+                        InputDecoration(
+
+                      labelText:
+                          'Escolher horário',
+
+                      border:
+                          OutlineInputBorder(
+
+                        borderRadius:
+                            BorderRadius
+                                .circular(14),
+                      ),
+                    ),
+
+                    items: turmas
+                        .map<
+                            DropdownMenuItem<
+                                int>>((t) {
+
+                      return DropdownMenuItem<int>(
+
+                        value:
+                            t['id'],
+
+                        child: Text(
+                          'Horário: ${t['horario']}',
+                        ),
+                      );
+
+                    }).toList(),
+
+                    onChanged:
+                        confirmou
+
+                            ? null
+
+                            : (v) {
+
+                                setState(() {
+
+                                  turmaSelecionada =
+                                      v;
+                                });
+                              },
+                  ),
+
+                  SizedBox(
+                    height: 20,
+                  ),
+
+                  if (confirmou)
+
+                    Container(
+
+                      padding:
+                          EdgeInsets.all(14),
+
+                      decoration:
+                          BoxDecoration(
+
+                        color: Colors
+                            .green
+                            .shade50,
+
+                        borderRadius:
+                            BorderRadius
+                                .circular(14),
+                      ),
+
+                      child: Row(
+
+                        children: [
+
+                          Icon(
+
+                            Icons
+                                .check_circle,
+
+                            color:
+                                Colors.green,
+                          ),
+
+                          SizedBox(
+                            width: 10,
+                          ),
+
+                          Expanded(
+
+                            child: Text(
+
+                              'Presença confirmada para $horarioConfirmado',
+
+                              style:
+                                  TextStyle(
+
+                                color: Colors
+                                    .green
+                                    .shade800,
+
+                                fontWeight:
+                                    FontWeight
+                                        .bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
 
             Spacer(),
 
-            ElevatedButton(
-              onPressed: (confirmou || turmaSelecionada == null || carregando)
-                  ? null
-                  : confirmarPresenca,
-              child: carregando
-                  ? CircularProgressIndicator(color: Colors.white)
-                  : Text('Confirmar Presença'),
-            ),
+            /**
+             * ✅ BOTÃO CONFIRMAR
+             */
+            if (!confirmou)
+
+              SizedBox(
+
+                height: 55,
+
+                child: ElevatedButton(
+
+                  onPressed:
+                      turmaSelecionada ==
+                                  null ||
+                              carregando
+
+                          ? null
+
+                          : confirmarPresenca,
+
+                  style:
+                      ElevatedButton
+                          .styleFrom(
+
+                    backgroundColor:
+                        Colors.amber,
+
+                    foregroundColor:
+                        Colors.black,
+
+                    shape:
+                        RoundedRectangleBorder(
+
+                      borderRadius:
+                          BorderRadius
+                              .circular(16),
+                    ),
+                  ),
+
+                  child: carregando
+
+                      ? SizedBox(
+
+                          height: 22,
+
+                          width: 22,
+
+                          child:
+                              CircularProgressIndicator(
+
+                            color:
+                                Colors.black,
+
+                            strokeWidth:
+                                2,
+                          ),
+                        )
+
+                      : Text(
+
+                          'Confirmar Presença',
+
+                          style:
+                              TextStyle(
+
+                            fontSize: 16,
+
+                            fontWeight:
+                                FontWeight
+                                    .bold,
+                          ),
+                        ),
+                ),
+              ),
+
+            /**
+             * ❌ BOTÃO CANCELAR
+             */
+            if (confirmou)
+
+              SizedBox(
+
+                height: 55,
+
+                child:
+                    ElevatedButton.icon(
+
+                  onPressed:
+                      removerPresenca,
+
+                  icon: Icon(
+                    Icons.close,
+                  ),
+
+                  label: Text(
+
+                    'Cancelar Presença',
+
+                    style: TextStyle(
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
+
+                  style:
+                      ElevatedButton
+                          .styleFrom(
+
+                    backgroundColor:
+                        Colors.red,
+
+                    foregroundColor:
+                        Colors.white,
+
+                    shape:
+                        RoundedRectangleBorder(
+
+                      borderRadius:
+                          BorderRadius
+                              .circular(16),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

@@ -449,3 +449,45 @@ export const historicoPorAluno = async (req, res) => {
     });
   }
 };
+
+
+/**
+ * ❌ CANCELAR PRESENÇA
+ */
+export const cancelarPresenca = async (req, res) => {
+
+  try {
+
+    const aluno = await pool.query(
+      `SELECT id
+       FROM alunos
+       WHERE usuario_id = $1`,
+      [req.user.id]
+    );
+
+    if (aluno.rows.length === 0) {
+
+      return res.status(404).json({
+        erro: 'Aluno não encontrado'
+      });
+    }
+
+    await pool.query(`
+      DELETE FROM presencas
+      WHERE aluno_id = $1
+      AND DATE(data) = CURRENT_DATE
+    `, [aluno.rows[0].id]);
+
+    res.json({
+      mensagem: 'Presença cancelada'
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      erro: err.message
+    });
+  }
+};
