@@ -7,90 +7,240 @@ import nodemailer from 'nodemailer';
 const SECRET = process.env.JWT_SECRET;
 
 /**
+ * 📧 TRANSPORTER EMAIL
+ */
+const transporter = nodemailer.createTransport({
+
+  host: 'smtp.gmail.com',
+
+  port: 587,
+
+  secure: false,
+
+  auth: {
+
+    user: process.env.EMAIL_USER,
+
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+/**
  * 📌 REGISTER
  */
 export const register = async (req, res) => {
+
   try {
 
-    let { email, senha, username, documento, tipo, codigo } = req.body;
+    let {
+      email,
+      senha,
+      username,
+      documento,
+      tipo,
+      codigo
+    } = req.body;
 
-    // 🔥 NORMALIZAÇÃO
-    email = String(email).trim().toLowerCase();
-    username = String(username).trim();
-    documento = String(documento).trim();
+    /**
+     * 🔥 NORMALIZAÇÃO
+     */
+    email =
+        String(email)
+            .trim()
+            .toLowerCase();
 
-    if (!email || !senha || !username || !documento) {
+    username =
+        String(username)
+            .trim();
+
+    documento =
+        String(documento)
+            .trim();
+
+    if (
+      !email ||
+      !senha ||
+      !username ||
+      !documento
+    ) {
+
       return res.status(400).json({
-        erro: 'Preencha todos os campos obrigatórios'
+
+        erro:
+            'Preencha todos os campos obrigatórios'
       });
     }
 
-    let tipoFinal = tipo || 'aluno';
+    let tipoFinal =
+        tipo || 'aluno';
 
-    const tiposValidos = ['admin', 'funcionario', 'aluno'];
+    const tiposValidos = [
 
-    if (!tiposValidos.includes(tipoFinal)) {
+      'admin',
+      'funcionario',
+      'aluno'
+    ];
+
+    if (
+      !tiposValidos.includes(
+        tipoFinal
+      )
+    ) {
+
       return res.status(400).json({
-        erro: 'Tipo de usuário inválido'
+
+        erro:
+            'Tipo de usuário inválido'
       });
     }
 
-    // 🔥 VALIDAÇÃO FUNCIONÁRIO
-// 🔥 VALIDAÇÃO FUNCIONÁRIO
-if (tipoFinal === 'funcionario') {
+    /**
+     * 🔥 FUNCIONÁRIO
+     */
+    if (
+      tipoFinal === 'funcionario'
+    ) {
 
-  const codigoValido =
-    await bcrypt.compare(
-      codigo,
-      process.env.CODIGO_FUNC_HASH
+      if (
+        !codigo ||
+        !process.env.CODIGO_FUNC_HASH
+      ) {
+
+        return res.status(403).json({
+
+          erro:
+              'Código inválido'
+        });
+      }
+
+      const codigoValido =
+          await bcrypt.compare(
+
+        String(codigo),
+
+        process.env.CODIGO_FUNC_HASH
+      );
+
+      if (!codigoValido) {
+
+        return res.status(403).json({
+
+          erro:
+              'Código inválido'
+        });
+      }
+    }
+
+    /**
+     * 🔍 DUPLICIDADE
+     */
+    const userExiste =
+        await pool.query(
+
+      `
+      SELECT id
+      FROM usuarios
+      WHERE email = $1
+      OR username = $2
+      OR documento = $3
+      `,
+
+      [
+        email,
+        username,
+        documento
+      ]
     );
 
-  if (!codigoValido) {
+    if (
+      userExiste.rows.length > 0
+    ) {
 
-    return res.status(403).json({
-      erro: 'Código inválido'
-    });
-  }
-}
-
-    // 🔍 VERIFICA DUPLICIDADE
-    const userExiste = await pool.query(
-      `SELECT id FROM usuarios 
-       WHERE email = $1 OR username = $2 OR documento = $3`,
-      [email, username, documento]
-    );
-
-    if (userExiste.rows.length > 0) {
       return res.status(400).json({
-        erro: 'Email, username ou CPF já cadastrados'
+
+        erro:
+            'Email, username ou CPF já cadastrados'
       });
     }
 
-    // 🔐 SENHA
-    const senhaLimpa = String(senha).trim();
+    /**
+     * 🔐 SENHA
+     */
+    const senhaLimpa =
+        String(senha).trim();
 
-    if (senhaLimpa.length < 4) {
+    if (
+      senhaLimpa.length < 4
+    ) {
+
       return res.status(400).json({
-        erro: 'Senha muito curta'
+
+        erro:
+            'Senha muito curta'
       });
     }
 
-    const hash = await bcrypt.hash(senhaLimpa, 10);
+    const hash =
+        await bcrypt.hash(
+          senhaLimpa,
+          10
+        );
 
-    const result = await pool.query(
-      `INSERT INTO usuarios (email, senha, username, documento, tipo) 
-       VALUES ($1, $2, $3, $4, $5) 
-       RETURNING id, email, username, documento, tipo`,
-      [email, hash, username, documento, tipoFinal]
+    /**
+     * 👤 INSERT
+     */
+    const result =
+        await pool.query(
+
+      `
+      INSERT INTO usuarios
+      (
+        email,
+        senha,
+        username,
+        documento,
+        tipo
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5
+      )
+      RETURNING
+      id,
+      email,
+      username,
+      documento,
+      tipo
+      `,
+
+      [
+        email,
+        hash,
+        username,
+        documento,
+        tipoFinal
+      ]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(
+      result.rows[0]
+    );
 
   } catch (err) {
-    console.error('ERRO REGISTER:', err);
+
+    console.error(
+      'ERRO REGISTER:',
+      err
+    );
 
     res.status(500).json({
-      erro: err.message
+
+      erro:
+          err.message
     });
   }
 };
@@ -99,62 +249,113 @@ if (tipoFinal === 'funcionario') {
  * 📌 LOGIN
  */
 export const login = async (req, res) => {
+
   try {
 
-    const SECRET = process.env.JWT_SECRET || '123456'; // 🔥 CORREÇÃO
+    const loginInputRaw =
+        req.body.login ||
+        req.body.email;
 
-    const loginInputRaw = req.body.login || req.body.email;
-    const senha = String(req.body.senha || '');
+    const senha =
+        String(
+          req.body.senha || ''
+        );
 
-    if (!loginInputRaw || !senha) {
+    if (
+      !loginInputRaw ||
+      !senha
+    ) {
+
       return res.status(400).json({
-        erro: 'Login/email e senha são obrigatórios'
+
+        erro:
+            'Login/email e senha são obrigatórios'
       });
     }
 
-    const loginInput = String(loginInputRaw).trim().toLowerCase();
+    const loginInput =
+        String(loginInputRaw)
+            .trim()
+            .toLowerCase();
 
-    const result = await pool.query(
-      `SELECT id, email, username, documento, senha, tipo 
-       FROM usuarios 
-       WHERE email = $1 
-       OR username = $1 
-       OR documento = $1`,
+    const result =
+        await pool.query(
+
+      `
+      SELECT
+        id,
+        email,
+        username,
+        documento,
+        senha,
+        tipo
+      FROM usuarios
+      WHERE email = $1
+      OR username = $1
+      OR documento = $1
+      `,
+
       [loginInput]
     );
 
-    const user = result.rows[0];
+    const user =
+        result.rows[0];
 
     if (!user) {
+
       return res.status(401).json({
-        erro: 'Usuário não encontrado'
+
+        erro:
+            'Usuário não encontrado'
       });
     }
 
-    const valid = await bcrypt.compare(senha, user.senha);
+    const valid =
+        await bcrypt.compare(
+          senha,
+          user.senha
+        );
 
     if (!valid) {
+
       return res.status(401).json({
-        erro: 'Senha inválida'
+
+        erro:
+            'Senha inválida'
       });
     }
 
-    const token = jwt.sign(
+    const token =
+        jwt.sign(
+
       {
         id: user.id,
         tipo: user.tipo
       },
+
       SECRET,
-      { expiresIn: '1d' }
+
+      {
+        expiresIn: '1d'
+      }
     );
 
-    res.json({ token });
+    res.json({
+
+      token
+    });
 
   } catch (err) {
-    console.error('ERRO LOGIN:', err);
+
+    console.error(
+      'ERRO LOGIN:',
+      err
+    );
 
     res.status(500).json({
-      erro: err.message
+
+      erro:
+          err.message
     });
   }
 };
@@ -171,23 +372,38 @@ export const esqueciSenha = async (req, res) => {
     if (!email) {
 
       return res.status(400).json({
-        erro: 'Email obrigatório'
+
+        erro:
+            'Email obrigatório'
       });
     }
 
-    const userResult = await pool.query(
+    const userResult =
+        await pool.query(
 
-      `SELECT id, email
-       FROM usuarios
-       WHERE email = $1`,
+      `
+      SELECT
+        id,
+        email
+      FROM usuarios
+      WHERE email = $1
+      `,
 
-      [email.toLowerCase()]
+      [
+        email
+            .toLowerCase()
+            .trim()
+      ]
     );
 
-    if (userResult.rows.length === 0) {
+    if (
+      userResult.rows.length === 0
+    ) {
 
       return res.status(404).json({
-        erro: 'Usuário não encontrado'
+
+        erro:
+            'Usuário não encontrado'
       });
     }
 
@@ -198,11 +414,12 @@ export const esqueciSenha = async (req, res) => {
      * 🔥 TOKEN
      */
     const token =
-        crypto.randomBytes(32)
+        crypto
+            .randomBytes(32)
             .toString('hex');
 
     /**
-     * ⏰ EXPIRA
+     * ⏰ EXPIRAÇÃO
      */
     const expira =
         new Date(
@@ -211,10 +428,13 @@ export const esqueciSenha = async (req, res) => {
 
     await pool.query(
 
-      `UPDATE usuarios
-       SET reset_token = $1,
-           reset_token_expira = $2
-       WHERE id = $3`,
+      `
+      UPDATE usuarios
+      SET
+        reset_token = $1,
+        reset_token_expira = $2
+      WHERE id = $3
+      `,
 
       [
         token,
@@ -224,27 +444,15 @@ export const esqueciSenha = async (req, res) => {
     );
 
     /**
-     * 📧 EMAIL
+     * 🔗 LINK
      */
-    const transporter =
-        nodemailer.createTransport({
-
-      service: 'gmail',
-
-      auth: {
-
-        user:
-            process.env.EMAIL_USER,
-
-        pass:
-            process.env.EMAIL_PASS,
-      },
-    });
-
     const link =
 
-      `https://SEUSITE.com/resetar-senha/$token`;
+      `https://SEUSITE.com/resetar-senha/${token}`;
 
+    /**
+     * 📧 EMAIL
+     */
     await transporter.sendMail({
 
       from:
@@ -257,9 +465,14 @@ export const esqueciSenha = async (req, res) => {
           'Recuperação de senha',
 
       html: `
-        <h2>Recuperação de senha</h2>
 
-        <p>Clique no link abaixo:</p>
+        <h2>
+          Recuperação de senha
+        </h2>
+
+        <p>
+          Clique no link abaixo:
+        </p>
 
         <a href="${link}">
           Redefinir senha
@@ -275,10 +488,15 @@ export const esqueciSenha = async (req, res) => {
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      'ERRO EMAIL:',
+      err
+    );
 
     res.status(500).json({
-      erro: err.message
+
+      erro:
+          err.message
     });
   }
 };
@@ -295,27 +513,39 @@ export const resetarSenha = async (req, res) => {
       senha
     } = req.body;
 
-    if (!token || !senha) {
+    if (
+      !token ||
+      !senha
+    ) {
 
       return res.status(400).json({
-        erro: 'Dados inválidos'
+
+        erro:
+            'Dados inválidos'
       });
     }
 
-    const result = await pool.query(
+    const result =
+        await pool.query(
 
-      `SELECT id
-       FROM usuarios
-       WHERE reset_token = $1
-       AND reset_token_expira > NOW()`,
+      `
+      SELECT id
+      FROM usuarios
+      WHERE reset_token = $1
+      AND reset_token_expira > NOW()
+      `,
 
       [token]
     );
 
-    if (result.rows.length === 0) {
+    if (
+      result.rows.length === 0
+    ) {
 
       return res.status(400).json({
-        erro: 'Token inválido'
+
+        erro:
+            'Token inválido'
       });
     }
 
@@ -330,11 +560,14 @@ export const resetarSenha = async (req, res) => {
 
     await pool.query(
 
-      `UPDATE usuarios
-       SET senha = $1,
-           reset_token = NULL,
-           reset_token_expira = NULL
-       WHERE id = $2`,
+      `
+      UPDATE usuarios
+      SET
+        senha = $1,
+        reset_token = NULL,
+        reset_token_expira = NULL
+      WHERE id = $2
+      `,
 
       [
         hash,
@@ -350,10 +583,15 @@ export const resetarSenha = async (req, res) => {
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      'ERRO RESET:',
+      err
+    );
 
     res.status(500).json({
-      erro: err.message
+
+      erro:
+          err.message
     });
   }
 };
