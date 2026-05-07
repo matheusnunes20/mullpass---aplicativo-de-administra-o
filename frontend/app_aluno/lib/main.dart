@@ -30,6 +30,17 @@ class MyApp extends StatelessWidget {
   }
 
   /**
+   * 🧹 LIMPAR TOKEN
+   */
+  Future<void> limparToken() async {
+
+    final prefs =
+        await SharedPreferences.getInstance();
+
+    await prefs.remove('token');
+  }
+
+  /**
    * 👤 BUSCAR USUÁRIO
    */
   Future<Map?> buscarUsuario(
@@ -172,7 +183,8 @@ class MyApp extends StatelessWidget {
            * 🔑 TOKEN EXISTE
            */
           if (snapshot.hasData &&
-              snapshot.data != null) {
+              snapshot.data != null &&
+              snapshot.data!.isNotEmpty) {
 
             final token =
                 snapshot.data!;
@@ -185,6 +197,9 @@ class MyApp extends StatelessWidget {
               builder:
                   (context, userSnap) {
 
+                /**
+                 * ⏳ LOADING USER
+                 */
                 if (userSnap.connectionState ==
                     ConnectionState.waiting) {
 
@@ -194,6 +209,7 @@ class MyApp extends StatelessWidget {
 
                       child:
                           CircularProgressIndicator(
+
                         color:
                             Color(0xFFFFC107),
                       ),
@@ -219,6 +235,8 @@ class MyApp extends StatelessWidget {
                 /**
                  * ❌ TOKEN INVÁLIDO
                  */
+                limparToken();
+
                 return LoginScreen();
               },
             );
