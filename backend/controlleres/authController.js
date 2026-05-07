@@ -34,24 +34,22 @@ export const register = async (req, res) => {
     }
 
     // 🔥 VALIDAÇÃO FUNCIONÁRIO
-    if (tipoFinal === 'funcionario') {
-      const codigoValido =
+// 🔥 VALIDAÇÃO FUNCIONÁRIO
+if (tipoFinal === 'funcionario') {
+
+  const codigoValido =
     await bcrypt.compare(
       codigo,
       process.env.CODIGO_FUNC_HASH
     );
 
-      if (!codigoValido) {
+  if (!codigoValido) {
 
-        return res.status(403).json({
-          erro: 'Código inválido'
-        });
-      } {
-        return res.status(403).json({
-          erro: 'Código inválido'
-        });
-      }
-    }
+    return res.status(403).json({
+      erro: 'Código inválido'
+    });
+  }
+}
 
     // 🔍 VERIFICA DUPLICIDADE
     const userExiste = await pool.query(
