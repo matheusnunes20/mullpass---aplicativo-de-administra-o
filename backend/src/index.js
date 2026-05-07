@@ -130,6 +130,53 @@ app.get('/test-db', async (req, res) => {
 });
 
 /**
+ * 🚀 DEBUG DATABASE
+ */
+app.get('/debug-db', async (req, res) => {
+
+  try {
+
+    const db = await pool.query(
+      'SELECT current_database()'
+    );
+
+    res.json(db.rows);
+
+  } catch (err) {
+
+    res.status(500).json({
+      erro: err.message
+    });
+  }
+});
+
+/**
+ * 🚀 DEBUG COLUNAS
+ */
+app.get('/debug-colunas', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(`
+
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+      AND table_name = 'notificacoes'
+
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    res.status(500).json({
+      erro: err.message
+    });
+  }
+});
+
+/**
  * 🔐 ROTAS
  */
 app.use(
@@ -326,50 +373,3 @@ PORTA: ${PORT}
 `);
   }
 );
-
-app.get('/debug-colunas', async (req, res) => {
-
-  try {
-
-    const result = await pool.query(`
-
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_name = 'notificacoes'
-
-    `);
-
-    res.json(result.rows);
-
-  } catch (err) {
-
-    res.status(500).json({
-      erro: err.message
-    });
-  }
-});
-
-app.get('/debug-db', async (req, res) => {
-
-  const db = await pool.query(
-    'SELECT current_database()'
-  );
-
-  res.json(db.rows);
-
-});
-
-app.get('/debug-colunas', async (req, res) => {
-
-  const result = await pool.query(`
-
-    SELECT column_name
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-    AND table_name = 'notificacoes'
-
-  `);
-
-  res.json(result.rows);
-
-});
