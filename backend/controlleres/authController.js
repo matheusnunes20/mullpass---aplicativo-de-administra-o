@@ -2,35 +2,19 @@ import pool from '../src/db.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const SECRET = process.env.JWT_SECRET;
+const SECRET =
+    process.env.JWT_SECRET;
 
 /**
- * 📧 TRANSPORTER EMAIL
+ * 📧 RESEND
  */
-const transporter = nodemailer.createTransport({
+const resend =
+    new Resend(
+      process.env.RESEND_API_KEY
+    );
 
-  host: 'smtp.gmail.com',
-
-  port: 587,
-
-  secure: false,
-
-  requireTLS: true,
-
-  tls: {
-    rejectUnauthorized: false,
-    family: 4
-  },
-
-  auth: {
-
-    user: process.env.EMAIL_USER,
-
-    pass: process.env.EMAIL_PASS,
-  },
-});
 /**
  * 📌 REGISTER
  */
@@ -459,10 +443,10 @@ export const esqueciSenha = async (req, res) => {
     /**
      * 📧 EMAIL
      */
-    await transporter.sendMail({
+    await resend.emails.send({
 
       from:
-          process.env.EMAIL_USER,
+          'onboarding@resend.dev',
 
       to:
           user.email,
@@ -477,7 +461,7 @@ export const esqueciSenha = async (req, res) => {
         </h2>
 
         <p>
-          Clique no link abaixo:
+          Clique abaixo:
         </p>
 
         <a href="${link}">
