@@ -17,6 +17,13 @@ const transporter = nodemailer.createTransport({
 
   secure: false,
 
+  requireTLS: true,
+
+  tls: {
+    rejectUnauthorized: false,
+    family: 4
+  },
+
   auth: {
 
     user: process.env.EMAIL_USER,
@@ -24,7 +31,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
-
 /**
  * 📌 REGISTER
  */
