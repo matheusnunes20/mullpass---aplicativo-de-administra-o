@@ -299,6 +299,9 @@ export const minhaFrequencia = async (req, res) => {
 
   try {
 
+    /**
+     * 👤 BUSCAR ALUNO
+     */
     const aluno = await pool.query(
       `SELECT id
        FROM alunos
@@ -314,10 +317,10 @@ export const minhaFrequencia = async (req, res) => {
     }
 
     const alunoId =
-      aluno.rows[0].id;
+        aluno.rows[0].id;
 
     /**
-     * 📅 PRESENÇAS
+     * ✅ TOTAL DE PRESENÇAS
      */
     const presencas = await pool.query(`
       SELECT COUNT(*) as total
@@ -328,29 +331,34 @@ export const minhaFrequencia = async (req, res) => {
     `, [alunoId]);
 
     /**
-     * 📚 AULAS
+     * 📚 TOTAL DE TURMAS
+     * (substitui aulas)
      */
     const aulas = await pool.query(`
       SELECT COUNT(*) as total
-      FROM aulas
-      WHERE DATE_TRUNC('month', data)
-      = DATE_TRUNC('month', CURRENT_DATE)
+      FROM turmas
     `);
 
     const totalPresencas =
-      Number(presencas.rows[0].total);
+        Number(
+          presencas.rows[0].total
+        );
 
     const totalAulas =
-      Number(aulas.rows[0].total);
+        Number(
+          aulas.rows[0].total
+        );
 
     let frequencia = 0;
 
     if (totalAulas > 0) {
 
       frequencia =
-        (totalPresencas / totalAulas) * 100;
+          (totalPresencas / totalAulas) * 100;
 
-      // 🔥 LIMITA EM 100%
+      /**
+       * 🔥 LIMITA EM 100%
+       */
       if (frequencia > 100) {
         frequencia = 100;
       }
@@ -359,13 +367,13 @@ export const minhaFrequencia = async (req, res) => {
     res.json({
 
       presencas:
-        totalPresencas,
+          totalPresencas,
 
       aulas:
-        totalAulas,
+          totalAulas,
 
       frequencia:
-        frequencia.toFixed(1)
+          frequencia.toFixed(1)
     });
 
   } catch (err) {
