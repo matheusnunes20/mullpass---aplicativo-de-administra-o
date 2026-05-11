@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../config/api.dart';
-import '../widgets/dateInput.dart';
-import '../widgets/timeRangeInput.dart';
+import '../widgets/date_input.dart';
+import '../widgets/time_range_input.dart';
 
 class CreateRachaScreen extends StatefulWidget {
   final String token;
@@ -62,9 +62,10 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
         }),
       );
 
-      print('RACHA STATUS: ${response.statusCode}');
-      print('RACHA BODY: ${response.body}');
+     debugPrint('RACHA STATUS: ${response.statusCode}');
+     debugPrint('RACHA BODY: ${response.body}');
 
+      if (!mounted) return;
       setState(() => loading = false);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -78,8 +79,9 @@ class _CreateRachaScreenState extends State<CreateRachaScreen> {
         );
       }
     } catch (e) {
-      print('ERRO RACHA: $e');
+     debugPrint('ERRO RACHA: $e');
 
+      if (!mounted) return;
       setState(() => loading = false);
 
       ScaffoldMessenger.of(context).showSnackBar(

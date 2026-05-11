@@ -59,6 +59,7 @@ class _ForgotPasswordScreenState
         ),
 
         headers: {
+
           'Content-Type':
               'application/json',
         },
@@ -69,7 +70,9 @@ class _ForgotPasswordScreenState
         }),
       );
 
-      print(response.body);
+      if (!mounted) return;
+
+     (response.body);
 
       if (response.statusCode == 200) {
 
@@ -99,7 +102,9 @@ class _ForgotPasswordScreenState
           SnackBar(
 
             content: Text(
+
               data['erro'] ??
+
                   'Erro ao enviar email',
             ),
           ),
@@ -108,7 +113,9 @@ class _ForgotPasswordScreenState
 
     } catch (e) {
 
-      print(e);
+     (e);
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context)
           .showSnackBar(
@@ -123,9 +130,13 @@ class _ForgotPasswordScreenState
 
     } finally {
 
-      setState(() {
-        loading = false;
-      });
+      if (mounted) {
+
+        setState(() {
+
+          loading = false;
+        });
+      }
     }
   }
 

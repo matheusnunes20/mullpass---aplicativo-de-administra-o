@@ -34,8 +34,8 @@ class _AlunoDetalheScreenState extends State<AlunoDetalheScreen> {
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
-      print('DETALHE STATUS: ${res.statusCode}');
-      print('DETALHE BODY: ${res.body}');
+     debugPrint('DETALHE STATUS: ${res.statusCode}');
+     debugPrint('DETALHE BODY: ${res.body}');
 
       if (res.statusCode == 200) {
         setState(() {
@@ -43,10 +43,12 @@ class _AlunoDetalheScreenState extends State<AlunoDetalheScreen> {
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() => loading = false);
       }
     } catch (e) {
-      print('ERRO DETALHE: $e');
+     debugPrint('ERRO DETALHE: $e');
+      if (!mounted) return;
       setState(() => loading = false);
     }
   }

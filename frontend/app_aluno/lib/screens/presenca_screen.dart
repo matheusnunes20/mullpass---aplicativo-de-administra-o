@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'HistoricoScreen.dart';
+import 'historico_screen.dart';
 import '../config/api.dart';
 
 class PresencaScreen extends StatefulWidget {
@@ -61,6 +61,8 @@ class _PresencaScreenState
       },
     );
 
+    if (!mounted) return;
+
     if (res.statusCode == 200) {
 
       final data =
@@ -92,6 +94,8 @@ class _PresencaScreenState
             'Bearer ${widget.token}'
       },
     );
+
+    if (!mounted) return;
 
     if (res.statusCode == 200) {
 
@@ -136,8 +140,9 @@ class _PresencaScreenState
    */
   Future<void> confirmarPresenca() async {
 
-    if (turmaSelecionada == null)
+    if (turmaSelecionada == null) {
       return;
+    }
 
     setState(() {
       carregando = true;
@@ -164,6 +169,8 @@ class _PresencaScreenState
             turmaSelecionada,
       }),
     );
+
+    if (!mounted) return;
 
     setState(() {
       carregando = false;
@@ -226,6 +233,8 @@ class _PresencaScreenState
             'Bearer ${widget.token}'
       },
     );
+
+    if (!mounted) return;
 
     if (res.statusCode == 200) {
 
@@ -345,7 +354,7 @@ class _PresencaScreenState
 
                   DropdownButtonFormField<int>(
 
-                    value:
+                    initialValue:
                         turmaSelecionada,
 
                     decoration:

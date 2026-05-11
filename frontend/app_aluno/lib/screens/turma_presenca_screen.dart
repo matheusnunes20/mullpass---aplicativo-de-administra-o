@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'HistoricoAlunoScreen.dart';
+import 'historico_aluno_screen.dart';
 import '../config/api.dart';
 
 class TurmaPresencaScreen extends StatefulWidget {
@@ -46,8 +46,8 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
         },
       );
 
-      print('PRESENCA TURMA STATUS: ${response.statusCode}');
-      print('PRESENCA TURMA BODY: ${response.body}');
+     debugPrint('PRESENCA TURMA STATUS: ${response.statusCode}');
+     debugPrint('PRESENCA TURMA BODY: ${response.body}');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -55,10 +55,12 @@ class _TurmaPresencaScreenState extends State<TurmaPresencaScreen> {
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() => loading = false);
       }
     } catch (e) {
-      print('ERRO PRESENCA TURMA: $e');
+     debugPrint('ERRO PRESENCA TURMA: $e');
+      if (!mounted) return;
       setState(() => loading = false);
     }
   }

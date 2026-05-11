@@ -52,9 +52,10 @@ class _CreateAulaScreenState extends State<CreateAulaScreen> {
         }),
       );
 
-      print('AULA STATUS: ${response.statusCode}');
-      print('AULA BODY: ${response.body}');
+     debugPrint('AULA STATUS: ${response.statusCode}');
+     debugPrint('AULA BODY: ${response.body}');
 
+      if (!mounted) return;
       setState(() => loading = false);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -68,8 +69,9 @@ class _CreateAulaScreenState extends State<CreateAulaScreen> {
         );
       }
     } catch (e) {
-      print('ERRO AULA: $e');
+     debugPrint('ERRO AULA: $e');
 
+      if (!mounted) return;
       setState(() => loading = false);
 
       ScaffoldMessenger.of(context).showSnackBar(

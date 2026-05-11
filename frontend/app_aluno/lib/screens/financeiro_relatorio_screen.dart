@@ -57,10 +57,12 @@ class _FinanceiroRelatorioScreenState
           statusMap['atrasado'] = json['atrasados'] ?? 0;
       }
 
+      if (!mounted) return;
       setState(() => loading = false);
 
     } catch (e) {
-      print("ERRO RELATORIO: $e");
+     debugPrint("ERRO RELATORIO: $e");
+      if (!mounted) return;
       setState(() => loading = false);
     }
   }

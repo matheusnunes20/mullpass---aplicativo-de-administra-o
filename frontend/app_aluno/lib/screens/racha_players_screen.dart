@@ -41,8 +41,8 @@ class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
         },
       );
 
-      print('PLAYERS STATUS: ${response.statusCode}');
-      print('PLAYERS BODY: ${response.body}');
+     debugPrint('PLAYERS STATUS: ${response.statusCode}');
+     debugPrint('PLAYERS BODY: ${response.body}');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -50,7 +50,7 @@ class _RachaPlayersScreenState extends State<RachaPlayersScreen> {
         });
       }
     } catch (e) {
-      print('ERRO PLAYERS: $e');
+     debugPrint('ERRO PLAYERS: $e');
     }
   }
 

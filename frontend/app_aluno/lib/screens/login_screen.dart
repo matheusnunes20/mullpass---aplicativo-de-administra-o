@@ -5,9 +5,9 @@ import 'dart:convert';
 
 import '../config/api.dart';
 
-import 'selectUserTypeScreen.dart';
-import 'dashboardScreen.dart';
-import 'forgotPasswordScreen.dart';
+import 'select_user_type_screen.dart';
+import 'dashboard_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
 
@@ -89,11 +89,13 @@ class _LoginScreenState
         }),
       );
 
-      print(
+      if (!mounted) return;
+
+     (
         'LOGIN STATUS: ${response.statusCode}',
       );
 
-      print(
+     (
         'LOGIN BODY: ${response.body}',
       );
 
@@ -124,11 +126,13 @@ class _LoginScreenState
           },
         );
 
-        print(
+        if (!mounted) return;
+
+       (
           'USER STATUS: ${userResponse.statusCode}',
         );
 
-        print(
+       (
           'USER BODY: ${userResponse.body}',
         );
 
@@ -155,6 +159,8 @@ class _LoginScreenState
           'token',
           token,
         );
+
+        if (!mounted) return;
 
         /**
          * 🚀 DASHBOARD
@@ -191,9 +197,11 @@ class _LoginScreenState
 
     } catch (e) {
 
-      print(
+     (
         'ERRO LOGIN: $e',
       );
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context)
           .showSnackBar(
@@ -208,7 +216,11 @@ class _LoginScreenState
 
     } finally {
 
-      setState(() => loading = false);
+      if (mounted) {
+
+        if (!mounted) return;
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -260,8 +272,8 @@ class _LoginScreenState
 
                 color:
                     Colors.white
-                        .withOpacity(
-                  0.15,
+                        .withValues(
+                  alpha: 0.15,
                 ),
 
                 borderRadius:

@@ -36,8 +36,8 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
-      print('FIN ADM STATUS: ${res.statusCode}');
-      print('FIN ADM BODY: ${res.body}');
+     debugPrint('FIN ADM STATUS: ${res.statusCode}');
+     debugPrint('FIN ADM BODY: ${res.body}');
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -47,10 +47,12 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() => loading = false);
       }
     } catch (e) {
-      print('ERRO FIN ADM: $e');
+     debugPrint('ERRO FIN ADM: $e');
+      if (!mounted) return;
       setState(() => loading = false);
     }
   }
@@ -62,8 +64,8 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
-      print('PAGAR STATUS: ${res.statusCode}');
-      print('PAGAR BODY: ${res.body}');
+     debugPrint('PAGAR STATUS: ${res.statusCode}');
+     debugPrint('PAGAR BODY: ${res.body}');
 
       if (res.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +82,7 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
         );
       }
     } catch (e) {
-      print('ERRO PAGAR: $e');
+     debugPrint('ERRO PAGAR: $e');
     }
   }
 
@@ -194,7 +196,7 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
                                     vertical: 5,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: cor(status).withOpacity(0.15),
+                                    color: cor(status).withValues(alpha: ),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(

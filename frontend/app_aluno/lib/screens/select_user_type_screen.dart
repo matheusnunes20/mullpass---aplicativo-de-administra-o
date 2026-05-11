@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'createAlunoScreen.dart';
-import 'createFuncionarioScreen.dart';
+import 'create_aluno_screen.dart';
+import 'create_funcionario_screen.dart';
 
 class SelectUserTypeScreen extends StatelessWidget {
   @override

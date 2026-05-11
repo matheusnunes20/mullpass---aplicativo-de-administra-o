@@ -63,7 +63,7 @@ console.log(
  * 🚀 MIDDLEWARES
  */
 app.use(cors({
-  origin: '*'
+  origin: process.env.FRONTEND_URL || '*'
 }));
 
 app.use(express.json());
@@ -72,14 +72,6 @@ app.use(express.json());
  * 🚀 DEBUG AUTH
  */
 app.use((req, res, next) => {
-
-  if (req.headers.authorization) {
-
-    console.log(
-      'REQ AUTH HEADER:',
-      req.headers.authorization
-    );
-  }
 
   next();
 });
@@ -344,7 +336,6 @@ app.use((err, req, res, next) => {
 🚨 ERRO GLOBAL
 URL: ${req.originalUrl}
 METHOD: ${req.method}
-BODY: ${JSON.stringify(req.body)}
 ERROR: ${err.message}
 
 `);

@@ -409,6 +409,15 @@ export const esqueciSenha = async (req, res) => {
             .toString('hex');
 
     /**
+     * 🔒 HASH TOKEN
+     */
+    const tokenHash =
+        crypto
+            .createHash('sha256')
+            .update(token)
+            .digest('hex');
+
+    /**
      * ⏰ EXPIRAÇÃO
      */
     const expira =
@@ -427,7 +436,7 @@ export const esqueciSenha = async (req, res) => {
       `,
 
       [
-        token,
+        tokenHash,
         expira,
         user.id
       ]
@@ -438,7 +447,7 @@ export const esqueciSenha = async (req, res) => {
      */
     const link =
 
-      `https://SEUSITE.com/resetar-senha/${token}`;
+      `${process.env.FRONTEND_URL}/resetar-senha/${token}`;
 
     /**
      * 📧 EMAIL
@@ -515,6 +524,27 @@ export const resetarSenha = async (req, res) => {
       });
     }
 
+    /**
+     * 🔒 HASH TOKEN
+     */
+    const tokenHash =
+        crypto
+            .createHash('sha256')
+            .update(token)
+            .digest('hex');
+
+    /**
+     * 🔐 VALIDA SENHA
+     */
+    if (senha.length < 4) {
+
+      return res.status(400).json({
+
+        erro:
+            'Senha muito curta'
+      });
+    }
+
     const result =
         await pool.query(
 
@@ -525,7 +555,7 @@ export const resetarSenha = async (req, res) => {
       AND reset_token_expira > NOW()
       `,
 
-      [token]
+      [tokenHash]
     );
 
     if (

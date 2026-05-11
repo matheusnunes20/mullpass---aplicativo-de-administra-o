@@ -81,15 +81,17 @@ class _FrequenciaScreenState
 
       } else {
 
+        if (!mounted) return;
         setState(() => loading = false);
       }
 
     } catch (e) {
 
-      print(
+     (
         "ERRO FREQUÊNCIA: $e",
       );
 
+      if (!mounted) return;
       setState(() => loading = false);
     }
   }
@@ -372,7 +374,7 @@ class _FrequenciaScreenState
 
                       color:
                           corFrequencia()
-                              .withOpacity(0.1),
+                              .withValues(alpha: ),
 
                       borderRadius:
                           BorderRadius.circular(

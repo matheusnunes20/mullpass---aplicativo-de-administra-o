@@ -38,8 +38,8 @@ class _TurmasScreenState extends State<TurmasScreen> {
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
-      print('USER STATUS: ${response.statusCode}');
-      print('USER BODY: ${response.body}');
+     debugPrint('USER STATUS: ${response.statusCode}');
+     debugPrint('USER BODY: ${response.body}');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -47,7 +47,7 @@ class _TurmasScreenState extends State<TurmasScreen> {
         });
       }
     } catch (e) {
-      print('ERRO USER: $e');
+     debugPrint('ERRO USER: $e');
     }
   }
 
@@ -63,8 +63,8 @@ class _TurmasScreenState extends State<TurmasScreen> {
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
-      print('TURMAS STATUS: ${turmasRes.statusCode}');
-      print('TURMAS BODY: ${turmasRes.body}');
+     debugPrint('TURMAS STATUS: ${turmasRes.statusCode}');
+     debugPrint('TURMAS BODY: ${turmasRes.body}');
 
       final data = jsonDecode(turmasRes.body);
 
@@ -80,7 +80,8 @@ class _TurmasScreenState extends State<TurmasScreen> {
         loading = false;
       });
     } catch (e) {
-      print('ERRO TURMAS: $e');
+     debugPrint('ERRO TURMAS: $e');
+      if (!mounted) return;
       setState(() => loading = false);
     }
   }
@@ -98,12 +99,12 @@ class _TurmasScreenState extends State<TurmasScreen> {
         }),
       );
 
-      print('ENTRAR TURMA STATUS: ${res.statusCode}');
-      print('ENTRAR TURMA BODY: ${res.body}');
+     debugPrint('ENTRAR TURMA STATUS: ${res.statusCode}');
+     debugPrint('ENTRAR TURMA BODY: ${res.body}');
 
       carregarDados();
     } catch (e) {
-      print('ERRO ENTRAR TURMA: $e');
+     debugPrint('ERRO ENTRAR TURMA: $e');
     }
   }
 

@@ -45,8 +45,8 @@ class _HistoricoAlunoScreenState extends State<HistoricoAlunoScreen> {
         },
       );
 
-      print('HIST STATUS: ${res.statusCode}');
-      print('HIST BODY: ${res.body}');
+     debugPrint('HIST STATUS: ${res.statusCode}');
+     debugPrint('HIST BODY: ${res.body}');
 
       if (res.statusCode == 200) {
         setState(() {
@@ -54,10 +54,12 @@ class _HistoricoAlunoScreenState extends State<HistoricoAlunoScreen> {
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() => loading = false);
       }
     } catch (e) {
-      print('ERRO HIST: $e');
+     debugPrint('ERRO HIST: $e');
+      if (!mounted) return;
       setState(() => loading = false);
     }
   }

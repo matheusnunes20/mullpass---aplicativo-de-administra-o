@@ -41,11 +41,13 @@ class _InadimplentesScreenState extends State<InadimplentesScreen> {
           loading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() => loading = false);
       }
 
     } catch (e) {
-      print("ERRO INADIMPLENTES: $e");
+     debugPrint("ERRO INADIMPLENTES: $e");
+      if (!mounted) return;
       setState(() => loading = false);
     }
   }
@@ -73,7 +75,7 @@ class _InadimplentesScreenState extends State<InadimplentesScreen> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      print("Erro ao abrir WhatsApp");
+     debugPrint("Erro ao abrir WhatsApp");
     }
   }
 
