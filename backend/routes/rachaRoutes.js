@@ -1,4 +1,5 @@
 import express from 'express';
+
 import {
   criarRacha,
   listarRachas,
@@ -7,12 +8,19 @@ import {
   deletarRacha
 } from '../controlleres/rachaController.js';
 
-import { authMiddleware } from '../middlewares/authMiddleware.js';
-import { permit } from '../middlewares/roleMiddleware.js';
+import {
+  authMiddleware
+} from '../middlewares/authMiddleware.js';
+
+import {
+  permit
+} from '../middlewares/roleMiddleware.js';
 
 const router = express.Router();
 
-// 📌 CRIAR RACHA
+/**
+ * 📌 CRIAR RACHA
+ */
 router.post(
   '/',
   authMiddleware,
@@ -20,28 +28,36 @@ router.post(
   criarRacha
 );
 
-// 📌 LISTAR RACHAS
+/**
+ * 📌 LISTAR RACHAS
+ */
 router.get(
   '/',
   authMiddleware,
   listarRachas
 );
 
-// 📌 ENTRAR NO RACHA
+/**
+ * 📌 ENTRAR NO RACHA
+ */
 router.post(
-  '/:id/jogadores',
+  '/entrar',
   authMiddleware,
   entrarRacha
 );
 
-// 📌 LISTAR JOGADORES
+/**
+ * 📌 LISTAR JOGADORES
+ */
 router.get(
   '/:id/jogadores',
   authMiddleware,
   listarJogadoresRacha
 );
 
-// 📌 DELETAR RACHA
+/**
+ * 📌 DELETAR RACHA
+ */
 router.delete(
   '/:id',
   authMiddleware,

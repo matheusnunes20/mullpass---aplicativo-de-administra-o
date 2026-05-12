@@ -1,5 +1,7 @@
 import pool from '../src/db.js';
-
+import {
+  entrarRacha
+} from '../controlleres/rachaController.js';
 /**
  * 📌 CRIAR RACHA
  */
@@ -101,78 +103,80 @@ export const listarJogadoresRacha = async (req, res) => {
  * 📌 ENTRAR NO RACHA
  */
 export const entrarRacha = async (req, res) => {
+
   try {
-    const racha_id = parseInt(req.body.racha_id, 10);
-    const userId = req.user?.id;
 
-    if (!racha_id) {
-      return res.status(400).json({ erro: 'racha_id inválido' });
-    }
+    const usuarioId =
+        req.user.id;
 
-    if (!userId) {
-      return res.status(401).json({ erro: 'Acesso negado' });
-    }
+    const { racha_id } =
+        req.body;
 
-    // 🔥 BUSCA ALUNO COM SEXO
-    const alunoResult = await pool.query(
-      `SELECT id, sexo FROM alunos WHERE usuario_id = $1`,
-      [userId]
+    /**
+     * 🔍 BUSCAR ALUNO
+     */
+    const aluno = await pool.query(
+
+      `SELECT id
+       FROM alunos
+       WHERE usuario_id = $1`,
+
+      [usuarioId]
     );
 
-    const aluno = alunoResult.rows[0];
+    if (aluno.rows.length === 0) {
 
-    if (!aluno) {
-      return res.status(400).json({ erro: 'Aluno não encontrado' });
+      return res.status(404).json({
+        erro: 'Aluno não encontrado'
+      });
     }
 
-    // 🔥 VERIFICA SE JÁ ESTÁ
-    const jaExiste = await pool.query(
-      `SELECT 1 FROM racha_jogadores WHERE racha_id = $1 AND aluno_id = $2`,
-      [racha_id, aluno.id]
+    const alunoId =
+        aluno.rows[0].id;
+
+    /**
+     * 🔍 VERIFICA DUPLICIDADE
+     */
+    const existe = await pool.query(
+
+      `SELECT id
+       FROM racha_jogadores
+       WHERE racha_id = $1
+       AND aluno_id = $2`,
+
+      [racha_id, alunoId]
     );
 
-    if (jaExiste.rows.length > 0) {
-      return res.status(400).json({ erro: 'Você já está nesse racha' });
+    if (existe.rows.length > 0) {
+
+      return res.status(400).json({
+        erro: 'Você já entrou nesse racha'
+      });
     }
 
-    // 🔥 BUSCA RACHA
-    const rachaResult = await pool.query(
-      `SELECT * FROM rachas WHERE id = $1`,
-      [racha_id]
-    );
-
-    const racha = rachaResult.rows[0];
-
-    if (!racha) {
-      return res.status(404).json({ erro: 'Racha não encontrado' });
-    }
-
-    // 🔥 VERIFICA LOTAÇÃO
-    const count = await pool.query(
-      `SELECT COUNT(*) FROM racha_jogadores WHERE racha_id = $1`,
-      [racha_id]
-    );
-
-    if (parseInt(count.rows[0].count, 10) >= racha.limite) {
-      return res.status(400).json({ erro: 'Racha lotado' });
-    }
-
-    // 🔥 REGRA DE TIPO
-    if (racha.tipo === 'feminino' && aluno.sexo !== 'feminino') {
-      return res.status(400).json({ erro: 'Racha exclusivo feminino' });
-    }
-
+    /**
+     * ✅ ENTRAR
+     */
     await pool.query(
-      `INSERT INTO racha_jogadores (racha_id, aluno_id)
-       VALUES ($1,$2)`,
-      [racha_id, aluno.id]
+
+      `INSERT INTO racha_jogadores
+       (racha_id, aluno_id)
+       VALUES ($1, $2)`,
+
+      [racha_id, alunoId]
     );
 
-    res.json({ mensagem: 'Entrou no racha com sucesso' });
+    res.status(201).json({
+      sucesso: true
+    });
 
   } catch (err) {
-    console.error('ERRO ENTRAR RACHA:', err);
-    res.status(500).json({ erro: err.message });
+
+    console.error(err);
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
 
