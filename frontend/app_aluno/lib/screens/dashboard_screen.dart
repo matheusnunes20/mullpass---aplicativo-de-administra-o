@@ -11,7 +11,7 @@ import 'create_racha_screen.dart';
 import 'create_aula_screen.dart';
 import 'home_screen.dart';
 import 'presenca_screen.dart';
-import 'turmasScreen.dart';
+import 'turmas_screen.dart';
 import 'financeiro_screen.dart';
 import 'financeiro_admin_screen.dart';
 import 'financeiro_relatorio_screen.dart';

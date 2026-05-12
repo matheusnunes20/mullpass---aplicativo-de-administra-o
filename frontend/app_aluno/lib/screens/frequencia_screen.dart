@@ -374,7 +374,7 @@ class _FrequenciaScreenState
 
                       color:
                           corFrequencia()
-                              .withValues(alpha: ),
+                              .withValues(alpha: 20),
 
                       borderRadius:
                           BorderRadius.circular(

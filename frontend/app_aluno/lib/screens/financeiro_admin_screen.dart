@@ -196,7 +196,7 @@ class _FinanceiroAdminScreenState extends State<FinanceiroAdminScreen> {
                                     vertical: 5,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: cor(status).withValues(alpha: ),
+                                    color: cor(status).withValues(alpha: 20),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(

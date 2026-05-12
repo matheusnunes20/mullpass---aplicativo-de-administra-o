@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
-import 'completarAlunoScreen.dart';
+import 'completar_aluno_screen.dart';
 import '../config/api.dart';
 
 class CreateAlunoScreen extends StatefulWidget {

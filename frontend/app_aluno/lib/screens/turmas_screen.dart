@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'turmaPresencaScreen.dart';
+import 'turma_presenca_screen.dart';
 import '../config/api.dart';
 
 class TurmasScreen extends StatefulWidget {
