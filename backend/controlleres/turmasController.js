@@ -16,8 +16,16 @@ export const listarTurmas = async (req, res) => {
         t.horario,
         t.limite,
         t.tipo,
-        t.modalidade,
-        t.professor,
+
+        COALESCE(
+          t.modalidade,
+          '-'
+        ) AS modalidade,
+
+        COALESCE(
+          t.professor,
+          '-'
+        ) AS professor,
 
         COUNT(DISTINCT i.aluno_id)
           AS inscritos,
@@ -34,7 +42,13 @@ export const listarTurmas = async (req, res) => {
       ON p.turma_id = t.id
       AND DATE(p.data) = CURRENT_DATE
 
-      GROUP BY t.id
+      GROUP BY
+        t.id,
+        t.horario,
+        t.limite,
+        t.tipo,
+        t.modalidade,
+        t.professor
 
       ORDER BY t.horario`
     );
@@ -46,13 +60,19 @@ export const listarTurmas = async (req, res) => {
           parseInt(
             t.inscritos,
             10
-          );
+          ) || 0;
 
       const presentesHoje =
           parseInt(
             t.presentes_hoje,
             10
-          );
+          ) || 0;
+
+      const limite =
+          parseInt(
+            t.limite,
+            10
+          ) || 0;
 
       return {
 
@@ -71,8 +91,7 @@ export const listarTurmas = async (req, res) => {
         professor:
             t.professor,
 
-        limite:
-            t.limite,
+        limite,
 
         inscritos,
 
@@ -80,10 +99,10 @@ export const listarTurmas = async (req, res) => {
             presentesHoje,
 
         vagas:
-            t.limite - inscritos,
+            limite - inscritos,
 
         lotada:
-            inscritos >= t.limite
+            inscritos >= limite
       };
     });
 
@@ -115,6 +134,7 @@ export const listarTurmas = async (req, res) => {
     });
 
     res.json({
+
       manha,
       noite
     });
@@ -161,8 +181,16 @@ export const buscarTurmaPorId = async (req, res) => {
         t.horario,
         t.limite,
         t.tipo,
-        t.modalidade,
-        t.professor,
+
+        COALESCE(
+          t.modalidade,
+          '-'
+        ) AS modalidade,
+
+        COALESCE(
+          t.professor,
+          '-'
+        ) AS professor,
 
         COUNT(DISTINCT i.aluno_id)
           AS inscritos,
@@ -181,7 +209,13 @@ export const buscarTurmaPorId = async (req, res) => {
 
       WHERE t.id = $1
 
-      GROUP BY t.id`,
+      GROUP BY
+        t.id,
+        t.horario,
+        t.limite,
+        t.tipo,
+        t.modalidade,
+        t.professor`,
 
       [id]
     );
@@ -200,13 +234,19 @@ export const buscarTurmaPorId = async (req, res) => {
         parseInt(
           t.inscritos,
           10
-        );
+        ) || 0;
 
     const presentesHoje =
         parseInt(
           t.presentes_hoje,
           10
-        );
+        ) || 0;
+
+    const limite =
+        parseInt(
+          t.limite,
+          10
+        ) || 0;
 
     res.json({
 
@@ -225,8 +265,7 @@ export const buscarTurmaPorId = async (req, res) => {
       professor:
           t.professor,
 
-      limite:
-          t.limite,
+      limite,
 
       inscritos,
 
@@ -234,10 +273,10 @@ export const buscarTurmaPorId = async (req, res) => {
           presentesHoje,
 
       vagas:
-          t.limite - inscritos,
+          limite - inscritos,
 
       lotada:
-          inscritos >= t.limite
+          inscritos >= limite
     });
 
   } catch (err) {
@@ -254,7 +293,7 @@ export const buscarTurmaPorId = async (req, res) => {
 };
 
 /**
- * 📌 LISTAR ALUNOS DA TURMA
+ * 📌 LISTAR ALUNOS PRESENTES HOJE
  */
 export const listarAlunosTurma = async (req, res) => {
 
@@ -276,20 +315,21 @@ export const listarAlunosTurma = async (req, res) => {
     const result =
         await pool.query(
 
-      `SELECT
+      `SELECT DISTINCT
 
         a.id,
         a.nome,
         a.telefone
 
-       FROM inscricoes i
+      FROM presencas p
 
-       JOIN alunos a
-       ON a.id = i.aluno_id
+      JOIN alunos a
+      ON a.id = p.aluno_id
 
-       WHERE i.turma_id = $1
+      WHERE p.turma_id = $1
+      AND DATE(p.data) = CURRENT_DATE
 
-       ORDER BY a.nome`,
+      ORDER BY a.nome`,
 
       [id]
     );
