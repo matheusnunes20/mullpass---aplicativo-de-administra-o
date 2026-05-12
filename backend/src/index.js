@@ -1,8 +1,8 @@
+import 'dotenv/config'
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-
 import pool from './db.js';
 
 import alunosRoutes from '../routes/alunosRoutes.js';
