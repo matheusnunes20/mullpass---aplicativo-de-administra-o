@@ -1,47 +1,117 @@
 import pool from '../src/db.js';
-import {
-  entrarRacha
-} from '../controlleres/rachaController.js';
+
 /**
  * 📌 CRIAR RACHA
  */
 export const criarRacha = async (req, res) => {
+
   try {
-    const userId = req.user?.id;
+
+    const userId =
+        req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ erro: 'Acesso negado' });
+
+      return res.status(401).json({
+        erro: 'Acesso negado'
+      });
     }
 
-    const { data, hora_inicio, hora_fim, local, quadra, limite, tipo } = req.body;
+    const {
 
-    if (!data || !hora_inicio || !hora_fim || !local || !quadra || !limite || !tipo) {
-      return res.status(400).json({ erro: 'Campos obrigatórios faltando' });
+      data,
+      hora_inicio,
+      hora_fim,
+      local,
+      quadra,
+      limite,
+      tipo
+
+    } = req.body;
+
+    if (
+
+      !data ||
+      !hora_inicio ||
+      !hora_fim ||
+      !local ||
+      !quadra ||
+      !limite ||
+      !tipo
+
+    ) {
+
+      return res.status(400).json({
+        erro: 'Campos obrigatórios faltando'
+      });
     }
 
-    const horaInicioFormatada = hora_inicio.includes(':')
-      ? hora_inicio
-      : `${hora_inicio}:00`;
+    const horaInicioFormatada =
 
-    const horaFimFormatada = hora_fim.includes(':')
-      ? hora_fim
-      : `${hora_fim}:00`;
+        hora_inicio.includes(':')
 
-    const horaFinal = `${horaInicioFormatada} - ${horaFimFormatada}`;
+            ? hora_inicio
 
-    const result = await pool.query(
-      `INSERT INTO rachas 
-      (data, hora, local, quadra, limite, tipo, criado_por)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
+            : `${hora_inicio}:00`;
+
+    const horaFimFormatada =
+
+        hora_fim.includes(':')
+
+            ? hora_fim
+
+            : `${hora_fim}:00`;
+
+    const horaFinal =
+
+        `${horaInicioFormatada} - ${horaFimFormatada}`;
+
+    const result =
+        await pool.query(
+
+      `INSERT INTO rachas
+      (
+        data,
+        hora,
+        local,
+        quadra,
+        limite,
+        tipo,
+        criado_por
+      )
+
+       VALUES
+       (
+        $1,$2,$3,$4,$5,$6,$7
+       )
+
        RETURNING *`,
-      [data, horaFinal, local, quadra, limite, tipo, userId]
+
+      [
+        data,
+        horaFinal,
+        local,
+        quadra,
+        limite,
+        tipo,
+        userId
+      ]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(
+      result.rows[0]
+    );
 
   } catch (err) {
-    console.error('ERRO CRIAR RACHA:', err);
-    res.status(500).json({ erro: err.message });
+
+    console.error(
+      'ERRO CRIAR RACHA:',
+      err
+    );
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
 
@@ -49,9 +119,14 @@ export const criarRacha = async (req, res) => {
  * 📌 LISTAR RACHAS
  */
 export const listarRachas = async (req, res) => {
+
   try {
-    const result = await pool.query(`
-      SELECT 
+
+    const result =
+        await pool.query(
+
+      `SELECT
+
         id,
         data,
         hora,
@@ -60,15 +135,26 @@ export const listarRachas = async (req, res) => {
         limite,
         tipo,
         criado_por
-      FROM rachas
-      ORDER BY data DESC
-    `);
 
-    res.json(result.rows);
+      FROM rachas
+
+      ORDER BY data DESC`
+    );
+
+    res.json(
+      result.rows
+    );
 
   } catch (err) {
-    console.error('ERRO LISTAR RACHAS:', err);
-    res.status(500).json({ erro: err.message });
+
+    console.error(
+      'ERRO LISTAR RACHAS:',
+      err
+    );
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
 
@@ -76,26 +162,54 @@ export const listarRachas = async (req, res) => {
  * 📌 LISTAR JOGADORES
  */
 export const listarJogadoresRacha = async (req, res) => {
+
   try {
-    const id = parseInt(req.params.id, 10);
+
+    const id =
+        parseInt(
+          req.params.id,
+          10
+        );
 
     if (!id) {
-      return res.status(400).json({ erro: 'ID inválido' });
+
+      return res.status(400).json({
+        erro: 'ID inválido'
+      });
     }
 
-    const result = await pool.query(
-      `SELECT a.nome, a.telefone
+    const result =
+        await pool.query(
+
+      `SELECT
+
+        a.nome,
+        a.telefone
+
        FROM racha_jogadores rj
-       JOIN alunos a ON a.id = rj.aluno_id
+
+       JOIN alunos a
+       ON a.id = rj.aluno_id
+
        WHERE rj.racha_id = $1`,
+
       [id]
     );
 
-    res.json(result.rows);
+    res.json(
+      result.rows
+    );
 
   } catch (err) {
-    console.error('ERRO JOGADORES RACHA:', err);
-    res.status(500).json({ erro: err.message });
+
+    console.error(
+      'ERRO JOGADORES RACHA:',
+      err
+    );
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
 
@@ -112,13 +226,23 @@ export const entrarRacha = async (req, res) => {
     const { racha_id } =
         req.body;
 
+    if (!racha_id) {
+
+      return res.status(400).json({
+        erro: 'Racha não informado'
+      });
+    }
+
     /**
      * 🔍 BUSCAR ALUNO
      */
-    const aluno = await pool.query(
+    const aluno =
+        await pool.query(
 
       `SELECT id
+
        FROM alunos
+
        WHERE usuario_id = $1`,
 
       [usuarioId]
@@ -137,14 +261,20 @@ export const entrarRacha = async (req, res) => {
     /**
      * 🔍 VERIFICA DUPLICIDADE
      */
-    const existe = await pool.query(
+    const existe =
+        await pool.query(
 
       `SELECT id
+
        FROM racha_jogadores
+
        WHERE racha_id = $1
        AND aluno_id = $2`,
 
-      [racha_id, alunoId]
+      [
+        racha_id,
+        alunoId
+      ]
     );
 
     if (existe.rows.length > 0) {
@@ -155,15 +285,73 @@ export const entrarRacha = async (req, res) => {
     }
 
     /**
+     * 🔍 VERIFICA LIMITE
+     */
+    const total =
+        await pool.query(
+
+      `SELECT COUNT(*) as total
+
+       FROM racha_jogadores
+
+       WHERE racha_id = $1`,
+
+      [racha_id]
+    );
+
+    const racha =
+        await pool.query(
+
+      `SELECT limite
+
+       FROM rachas
+
+       WHERE id = $1`,
+
+      [racha_id]
+    );
+
+    if (racha.rows.length === 0) {
+
+      return res.status(404).json({
+        erro: 'Racha não encontrado'
+      });
+    }
+
+    const jogadores =
+        Number(
+          total.rows[0].total
+        );
+
+    const limite =
+        Number(
+          racha.rows[0].limite
+        );
+
+    if (jogadores >= limite) {
+
+      return res.status(400).json({
+        erro: 'Racha lotado'
+      });
+    }
+
+    /**
      * ✅ ENTRAR
      */
     await pool.query(
 
       `INSERT INTO racha_jogadores
-       (racha_id, aluno_id)
+       (
+        racha_id,
+        aluno_id
+       )
+
        VALUES ($1, $2)`,
 
-      [racha_id, alunoId]
+      [
+        racha_id,
+        alunoId
+      ]
     );
 
     res.status(201).json({
@@ -172,7 +360,10 @@ export const entrarRacha = async (req, res) => {
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      'ERRO ENTRAR RACHA:',
+      err
+    );
 
     res.status(500).json({
       erro: err.message
@@ -184,50 +375,99 @@ export const entrarRacha = async (req, res) => {
  * 📌 DELETAR RACHA
  */
 export const deletarRacha = async (req, res) => {
+
   try {
-    const id = parseInt(req.params.id, 10);
-    const userId = req.user?.id;
+
+    const id =
+        parseInt(
+          req.params.id,
+          10
+        );
+
+    const userId =
+        req.user?.id;
 
     if (!id) {
-      return res.status(400).json({ erro: 'ID inválido' });
+
+      return res.status(400).json({
+        erro: 'ID inválido'
+      });
     }
 
     if (!userId) {
-      return res.status(401).json({ erro: 'Acesso negado' });
+
+      return res.status(401).json({
+        erro: 'Acesso negado'
+      });
     }
 
-    const result = await pool.query(
-      `SELECT * FROM rachas WHERE id = $1`,
+    const result =
+        await pool.query(
+
+      `SELECT *
+
+       FROM rachas
+
+       WHERE id = $1`,
+
       [id]
     );
 
-    const racha = result.rows[0];
+    const racha =
+        result.rows[0];
 
     if (!racha) {
-      return res.status(404).json({ erro: 'Racha não encontrado' });
+
+      return res.status(404).json({
+        erro: 'Racha não encontrado'
+      });
     }
 
     if (
-      racha.criado_por.toString() !== userId.toString() &&
+
+      racha.criado_por.toString() !==
+      userId.toString()
+
+      &&
+
       req.user.tipo !== 'admin'
+
     ) {
-      return res.status(403).json({ erro: 'Sem permissão' });
+
+      return res.status(403).json({
+        erro: 'Sem permissão'
+      });
     }
 
     await pool.query(
-      `DELETE FROM racha_jogadores WHERE racha_id = $1`,
+
+      `DELETE FROM racha_jogadores
+       WHERE racha_id = $1`,
+
       [id]
     );
 
     await pool.query(
-      `DELETE FROM rachas WHERE id = $1`,
+
+      `DELETE FROM rachas
+       WHERE id = $1`,
+
       [id]
     );
 
-    res.json({ mensagem: 'Racha deletado com sucesso' });
+    res.json({
+      mensagem: 'Racha deletado com sucesso'
+    });
 
   } catch (err) {
-    console.error('ERRO DELETAR RACHA:', err);
-    res.status(500).json({ erro: err.message });
+
+    console.error(
+      'ERRO DELETAR RACHA:',
+      err
+    );
+
+    res.status(500).json({
+      erro: err.message
+    });
   }
 };
