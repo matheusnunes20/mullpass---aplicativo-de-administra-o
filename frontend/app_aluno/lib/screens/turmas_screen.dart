@@ -1,501 +1,501 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+  import 'package:flutter/material.dart';
+  import 'package:http/http.dart' as http;
+  import 'dart:convert';
 
-import 'turma_presenca_screen.dart';
-import '../config/api.dart';
+  import 'turma_presenca_screen.dart';
+  import '../config/api.dart';
 
-class TurmasScreen extends StatefulWidget {
+  class TurmasScreen extends StatefulWidget {
 
-  final String token;
+    final String token;
 
-  TurmasScreen({
-    required this.token,
-  });
+    TurmasScreen({
+      required this.token,
+    });
 
-  @override
-  _TurmasScreenState createState() =>
-      _TurmasScreenState();
-}
-
-class _TurmasScreenState
-    extends State<TurmasScreen> {
-
-  final String baseUrl =
-      Api.baseUrl;
-
-  List turmas = [];
-
-  Map? minhaTurma;
-
-  Map user = {};
-
-  bool loading = true;
-
-  @override
-  void initState() {
-
-    super.initState();
-
-    carregarDados();
-
-    buscarUsuario();
+    @override
+    _TurmasScreenState createState() =>
+        _TurmasScreenState();
   }
 
-  Future<void> buscarUsuario() async {
+  class _TurmasScreenState
+      extends State<TurmasScreen> {
 
-    try {
+    final String baseUrl =
+        Api.baseUrl;
 
-      final response =
-          await http.get(
+    List turmas = [];
 
-        Uri.parse(
-          '$baseUrl/usuarios/me',
-        ),
+    Map? minhaTurma;
 
-        headers: {
+    Map user = {};
 
-          'Authorization':
-              'Bearer ${widget.token}',
-        },
-      );
+    bool loading = true;
 
-      debugPrint(
-        'USER STATUS: ${response.statusCode}',
-      );
+    @override
+    void initState() {
 
-      debugPrint(
-        'USER BODY: ${response.body}',
-      );
+      super.initState();
 
-      if (response.statusCode == 200) {
+      carregarDados();
+
+      buscarUsuario();
+    }
+
+    Future<void> buscarUsuario() async {
+
+      try {
+
+        final response =
+            await http.get(
+
+          Uri.parse(
+            '$baseUrl/usuarios/me',
+          ),
+
+          headers: {
+
+            'Authorization':
+                'Bearer ${widget.token}',
+          },
+        );
+
+        debugPrint(
+          'USER STATUS: ${response.statusCode}',
+        );
+
+        debugPrint(
+          'USER BODY: ${response.body}',
+        );
+
+        if (response.statusCode == 200) {
+
+          if (!mounted) return;
+
+          setState(() {
+
+            user =
+                jsonDecode(
+                  response.body,
+                );
+          });
+        }
+
+      } catch (e) {
+
+        debugPrint(
+          'ERRO USER: $e',
+        );
+      }
+    }
+
+    Future<void> carregarDados() async {
+
+      try {
+
+        final turmasRes =
+            await http.get(
+
+          Uri.parse(
+            '$baseUrl/turmas',
+          ),
+
+          headers: {
+
+            'Authorization':
+                'Bearer ${widget.token}',
+          },
+        );
+
+        final minhaRes =
+            await http.get(
+
+          Uri.parse(
+            '$baseUrl/inscricoes/me',
+          ),
+
+          headers: {
+
+            'Authorization':
+                'Bearer ${widget.token}',
+          },
+        );
+
+        debugPrint(
+          'TURMAS STATUS: ${turmasRes.statusCode}',
+        );
+
+        debugPrint(
+          'TURMAS BODY: ${turmasRes.body}',
+        );
+
+        final data =
+            jsonDecode(
+              turmasRes.body,
+            );
 
         if (!mounted) return;
 
         setState(() {
 
-          user =
-              jsonDecode(
-                response.body,
-              );
+          turmas = [
+
+            ...data['manha'],
+
+            ...data['noite'],
+          ];
+
+          minhaTurma =
+
+              minhaRes.body.isNotEmpty
+
+                  ? jsonDecode(
+                      minhaRes.body,
+                    )
+
+                  : null;
+
+          loading = false;
+        });
+
+      } catch (e) {
+
+        debugPrint(
+          'ERRO TURMAS: $e',
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+
+          loading = false;
         });
       }
-
-    } catch (e) {
-
-      debugPrint(
-        'ERRO USER: $e',
-      );
     }
-  }
 
-  Future<void> carregarDados() async {
+    Future<void> entrarNaTurma(
+      int turmaId,
+    ) async {
 
-    try {
+      try {
 
-      final turmasRes =
-          await http.get(
+        final res =
+            await http.post(
 
-        Uri.parse(
-          '$baseUrl/turmas',
-        ),
+          Uri.parse(
+            '$baseUrl/inscricoes',
+          ),
 
-        headers: {
+          headers: {
 
-          'Authorization':
-              'Bearer ${widget.token}',
-        },
-      );
+            'Authorization':
+                'Bearer ${widget.token}',
 
-      final minhaRes =
-          await http.get(
+            'Content-Type':
+                'application/json',
+          },
 
-        Uri.parse(
-          '$baseUrl/inscricoes/me',
-        ),
+          body: jsonEncode({
 
-        headers: {
+            'turma_id': turmaId,
+          }),
+        );
 
-          'Authorization':
-              'Bearer ${widget.token}',
-        },
-      );
+        debugPrint(
+          'ENTRAR TURMA STATUS: ${res.statusCode}',
+        );
 
-      debugPrint(
-        'TURMAS STATUS: ${turmasRes.statusCode}',
-      );
+        debugPrint(
+          'ENTRAR TURMA BODY: ${res.body}',
+        );
 
-      debugPrint(
-        'TURMAS BODY: ${turmasRes.body}',
-      );
+        carregarDados();
 
-      final data =
-          jsonDecode(
-            turmasRes.body,
-          );
+      } catch (e) {
 
-      if (!mounted) return;
-
-      setState(() {
-
-        turmas = [
-
-          ...data['manha'],
-
-          ...data['noite'],
-        ];
-
-        minhaTurma =
-
-            minhaRes.body.isNotEmpty
-
-                ? jsonDecode(
-                    minhaRes.body,
-                  )
-
-                : null;
-
-        loading = false;
-      });
-
-    } catch (e) {
-
-      debugPrint(
-        'ERRO TURMAS: $e',
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-
-        loading = false;
-      });
+        debugPrint(
+          'ERRO ENTRAR TURMA: $e',
+        );
+      }
     }
-  }
 
-  Future<void> entrarNaTurma(
-    int turmaId,
-  ) async {
+    Widget cardTurma(
+      Map turma,
+    ) {
 
-    try {
+      final bool lotada =
+          turma['lotada'] ?? false;
 
-      final res =
-          await http.post(
+      final bool minha =
 
-        Uri.parse(
-          '$baseUrl/inscricoes',
+          minhaTurma != null &&
+
+          minhaTurma!['id'] ==
+              turma['id'];
+
+      final bool isFuncionario =
+
+          user['tipo'] == 'funcionario' ||
+
+          user['tipo'] == 'admin';
+
+      return Card(
+
+        elevation: 3,
+
+        margin:
+            EdgeInsets.only(
+          bottom: 14,
         ),
 
-        headers: {
+        shape:
+            RoundedRectangleBorder(
 
-          'Authorization':
-              'Bearer ${widget.token}',
-
-          'Content-Type':
-              'application/json',
-        },
-
-        body: jsonEncode({
-
-          'turma_id': turmaId,
-        }),
-      );
-
-      debugPrint(
-        'ENTRAR TURMA STATUS: ${res.statusCode}',
-      );
-
-      debugPrint(
-        'ENTRAR TURMA BODY: ${res.body}',
-      );
-
-      carregarDados();
-
-    } catch (e) {
-
-      debugPrint(
-        'ERRO ENTRAR TURMA: $e',
-      );
-    }
-  }
-
-  Widget cardTurma(
-    Map turma,
-  ) {
-
-    final bool lotada =
-        turma['lotada'] ?? false;
-
-    final bool minha =
-
-        minhaTurma != null &&
-
-        minhaTurma!['id'] ==
-            turma['id'];
-
-    final bool isFuncionario =
-
-        user['tipo'] == 'funcionario' ||
-
-        user['tipo'] == 'admin';
-
-    return Card(
-
-      elevation: 3,
-
-      margin:
-          EdgeInsets.only(
-        bottom: 14,
-      ),
-
-      shape:
-          RoundedRectangleBorder(
-
-        borderRadius:
-            BorderRadius.circular(
-          14,
+          borderRadius:
+              BorderRadius.circular(
+            14,
+          ),
         ),
-      ),
 
-      child: ListTile(
+        child: ListTile(
 
-        contentPadding:
-            EdgeInsets.all(16),
+          contentPadding:
+              EdgeInsets.all(16),
 
-        title: Column(
+          title: Column(
 
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
 
-          children: [
+            children: [
 
-            Text(
+              Text(
 
-              turma['horario'] ?? '-',
+                turma['horario'] ?? '-',
 
-              style: TextStyle(
+                style: TextStyle(
 
-                fontWeight:
-                    FontWeight.bold,
+                  fontWeight:
+                      FontWeight.bold,
 
-                fontSize: 20,
+                  fontSize: 20,
+                ),
               ),
-            ),
 
-            SizedBox(
-              height: 8,
-            ),
+              SizedBox(
+                height: 8,
+              ),
 
-            Text(
-              '🏖 ${turma['modalidade'] ?? '-'}',
-            ),
+              Text(
+                '🏖 ${turma['modalidade'] ?? '-'}',
+              ),
 
-            SizedBox(
-              height: 3,
-            ),
+              SizedBox(
+                height: 3,
+              ),
 
-            Text(
-              '👨‍🏫 ${turma['professor'] ?? '-'}',
-            ),
+              Text(
+                '👨‍🏫 ${turma['professor'] ?? '-'}',
+              ),
 
-            SizedBox(
-              height: 8,
-            ),
+              SizedBox(
+                height: 8,
+              ),
 
-            Text(
+              Text(
 
-              '👥 ${turma['inscritos']}/${turma['limite']} inscritos',
-            ),
+                '👥 ${turma['inscritos']}/${turma['limite']} inscritos',
+              ),
 
-            SizedBox(
-              height: 3,
-            ),
+              SizedBox(
+                height: 3,
+              ),
 
-            Text(
-              '✅ ${turma['presentes_hoje']} presentes hoje',
-            ),
-          ],
-        ),
+              Text(
+                '✅ ${turma['presentes_hoje']} presentes hoje',
+              ),
+            ],
+          ),
 
-        trailing:
+          trailing:
 
-            isFuncionario
+              isFuncionario
 
-                ? ElevatedButton(
+                  ? ElevatedButton(
 
-                    style:
-                        ElevatedButton.styleFrom(
+                      style:
+                          ElevatedButton.styleFrom(
 
-                      backgroundColor:
-                          Colors.amber,
+                        backgroundColor:
+                            Colors.amber,
 
-                      foregroundColor:
-                          Colors.black,
-                    ),
+                        foregroundColor:
+                            Colors.black,
+                      ),
 
-                    onPressed: () {
+                      onPressed: () {
 
-                      Navigator.push(
+                        Navigator.push(
 
-                        context,
+                          context,
 
-                        MaterialPageRoute(
+                          MaterialPageRoute(
 
-                          builder: (_) =>
+                            builder: (_) =>
 
-                              TurmaPresencaScreen(
+                                TurmaPresencaScreen(
 
-                            token:
-                                widget.token,
+                              token:
+                                  widget.token,
 
-                            turmaId:
-                                turma['id'],
+                              turmaId:
+                                  turma['id'],
 
-                            horario:
-                                turma['horario'],
+                              horario:
+                                  turma['horario'],
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
 
-                    child:
-                        Text('Ver lista'),
-                  )
+                      child:
+                          Text('Ver lista'),
+                    )
 
-                : minha
+                  : minha
 
-                    ? Column(
+                      ? Column(
 
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
+                          mainAxisAlignment:
+                              MainAxisAlignment.center,
 
-                        children: [
+                          children: [
 
-                          Icon(
+                            Icon(
 
-                            Icons.check_circle,
-
-                            color:
-                                Colors.green,
-                          ),
-
-                          SizedBox(
-                            height: 4,
-                          ),
-
-                          Text(
-
-                            'Sua turma',
-
-                            style: TextStyle(
+                              Icons.check_circle,
 
                               color:
                                   Colors.green,
-
-                              fontWeight:
-                                  FontWeight.bold,
                             ),
-                          ),
-                        ],
-                      )
 
-                    : ElevatedButton(
+                            SizedBox(
+                              height: 4,
+                            ),
 
-                        onPressed:
+                            Text(
 
-                            lotada
+                              'Sua turma',
 
-                                ? null
+                              style: TextStyle(
 
-                                : () {
+                                color:
+                                    Colors.green,
 
-                                    entrarNaTurma(
-                                      turma['id'],
-                                    );
-                                  },
+                                fontWeight:
+                                    FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        )
 
-                        style:
-                            ElevatedButton.styleFrom(
+                      : ElevatedButton(
 
-                          backgroundColor:
+                          onPressed:
 
                               lotada
 
-                                  ? Colors.grey
+                                  ? null
 
-                                  : Colors.black,
+                                  : () {
+
+                                      entrarNaTurma(
+                                        turma['id'],
+                                      );
+                                    },
+
+                          style:
+                              ElevatedButton.styleFrom(
+
+                            backgroundColor:
+
+                                lotada
+
+                                    ? Colors.grey
+
+                                    : Colors.black,
+                          ),
+
+                          child: Text(
+
+                            lotada
+
+                                ? 'Lotada'
+
+                                : 'Entrar',
+                          ),
                         ),
+        ),
+      );
+    }
+
+    @override
+    Widget build(BuildContext context) {
+
+      return Scaffold(
+
+        appBar: AppBar(
+
+          title:
+              Text('Turmas'),
+
+          backgroundColor:
+              Colors.amber,
+
+          foregroundColor:
+              Colors.black,
+        ),
+
+        body:
+
+            loading
+
+                ? Center(
+
+                    child:
+                        CircularProgressIndicator(),
+                  )
+
+                : turmas.isEmpty
+
+                    ? Center(
 
                         child: Text(
+                          'Nenhuma turma encontrada',
+                        ),
+                      )
 
-                          lotada
+                    : Padding(
 
-                              ? 'Lotada'
+                        padding:
+                            EdgeInsets.all(16),
 
-                              : 'Entrar',
+                        child: ListView(
+
+                          children:
+
+                              turmas
+
+                                  .map(
+
+                                    (t) =>
+
+                                        cardTurma(t),
+                                  )
+
+                                  .toList(),
                         ),
                       ),
-      ),
-    );
+      );
+    }
   }
-
-  @override
-  Widget build(BuildContext context) {
-
-    return Scaffold(
-
-      appBar: AppBar(
-
-        title:
-            Text('Turmas'),
-
-        backgroundColor:
-            Colors.amber,
-
-        foregroundColor:
-            Colors.black,
-      ),
-
-      body:
-
-          loading
-
-              ? Center(
-
-                  child:
-                      CircularProgressIndicator(),
-                )
-
-              : turmas.isEmpty
-
-                  ? Center(
-
-                      child: Text(
-                        'Nenhuma turma encontrada',
-                      ),
-                    )
-
-                  : Padding(
-
-                      padding:
-                          EdgeInsets.all(16),
-
-                      child: ListView(
-
-                        children:
-
-                            turmas
-
-                                .map(
-
-                                  (t) =>
-
-                                      cardTurma(t),
-                                )
-
-                                .toList(),
-                      ),
-                    ),
-    );
-  }
-}

@@ -27,6 +27,11 @@ export const listarTurmas = async (req, res) => {
           '-'
         ) AS professor,
 
+        COALESCE(
+          t.sexo,
+          'todos'
+        ) AS sexo,
+
         COUNT(DISTINCT i.aluno_id)
           AS inscritos,
 
@@ -48,7 +53,8 @@ export const listarTurmas = async (req, res) => {
         t.limite,
         t.tipo,
         t.modalidade,
-        t.professor
+        t.professor,
+        t.sexo
 
       ORDER BY t.horario`
     );
@@ -90,6 +96,9 @@ export const listarTurmas = async (req, res) => {
 
         professor:
             t.professor,
+
+        sexo:
+            t.sexo,
 
         limite,
 
@@ -192,6 +201,11 @@ export const buscarTurmaPorId = async (req, res) => {
           '-'
         ) AS professor,
 
+        COALESCE(
+          t.sexo,
+          'todos'
+        ) AS sexo,
+
         COUNT(DISTINCT i.aluno_id)
           AS inscritos,
 
@@ -215,7 +229,8 @@ export const buscarTurmaPorId = async (req, res) => {
         t.limite,
         t.tipo,
         t.modalidade,
-        t.professor`,
+        t.professor,
+        t.sexo`,
 
       [id]
     );
@@ -264,6 +279,9 @@ export const buscarTurmaPorId = async (req, res) => {
 
       professor:
           t.professor,
+
+      sexo:
+          t.sexo,
 
       limite,
 
