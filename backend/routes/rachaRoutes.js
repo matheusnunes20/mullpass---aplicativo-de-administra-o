@@ -5,7 +5,8 @@ import {
   listarRachas,
   entrarRacha,
   listarJogadoresRacha,
-  deletarRacha
+  deletarRacha,
+  sairRacha
 } from '../controlleres/rachaController.js';
 
 import {
@@ -63,6 +64,12 @@ router.delete(
   authMiddleware,
   permit('admin', 'funcionario'),
   deletarRacha
+);
+
+router.delete(
+  '/sair/:id',
+  authMiddleware,
+  sairRacha
 );
 
 export default router;

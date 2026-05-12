@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
 import 'racha_players_screen.dart';
 import 'create_racha_screen.dart';
 import '../config/api.dart';
@@ -11,6 +12,7 @@ class RachaScreen extends StatefulWidget {
   final Map user;
 
   RachaScreen({
+
     required this.token,
     required this.user,
   });
@@ -23,11 +25,12 @@ class RachaScreen extends StatefulWidget {
 class _RachaScreenState
     extends State<RachaScreen> {
 
-  // ✅ BASE URL CORRETA
   final String baseUrl =
       Api.baseUrl;
 
   List rachas = [];
+
+  List meusRachas = [];
 
   @override
   void initState() {
@@ -57,34 +60,54 @@ class _RachaScreenState
 
       if (!mounted) return;
 
-     (
+      print(
         'RACHAS STATUS: ${response.statusCode}',
       );
 
-     (
+      print(
         'RACHAS BODY: ${response.body}',
       );
 
       if (response.statusCode == 200) {
 
+        final data =
+            jsonDecode(
+              response.body,
+            );
+
         setState(() {
 
-          rachas =
-              jsonDecode(
-                response.body,
-              );
+          rachas = data;
+
+          /**
+           * 🔥 IDENTIFICA
+           * RACHAS ENTRADOS
+           */
+          meusRachas =
+
+              data
+
+                  .where((r) =>
+
+                      r['entrou'] == true)
+
+                  .map((r) => r['id'])
+
+                  .toList();
         });
       }
 
     } catch (e) {
 
-     (
+      print(
         'ERRO RACHAS: $e',
       );
     }
   }
 
-  Future<void> entrarRacha(int id) async {
+  Future<void> entrarRacha(
+    int id,
+  ) async {
 
     try {
 
@@ -112,23 +135,40 @@ class _RachaScreenState
 
       if (!mounted) return;
 
-     (
+      print(
         'ENTRAR STATUS: ${response.statusCode}',
       );
 
-     (
+      print(
         'ENTRAR BODY: ${response.body}',
       );
 
-      if (response.statusCode == 200) {
+      final body =
+
+          response.body.isNotEmpty
+
+              ? jsonDecode(response.body)
+
+              : {};
+
+      if (
+
+          response.statusCode == 200 ||
+
+          response.statusCode == 201
+
+      ) {
 
         ScaffoldMessenger.of(context)
             .showSnackBar(
 
           SnackBar(
 
+            backgroundColor:
+                Colors.green,
+
             content: Text(
-              'Entrou no racha',
+              'Você entrou no racha ✅',
             ),
           ),
         );
@@ -142,8 +182,14 @@ class _RachaScreenState
 
           SnackBar(
 
+            backgroundColor:
+                Colors.red,
+
             content: Text(
-              response.body,
+
+              body['erro'] ??
+
+              'Erro ao entrar no racha',
             ),
           ),
         );
@@ -151,13 +197,104 @@ class _RachaScreenState
 
     } catch (e) {
 
-     (
+      print(
         'ERRO ENTRAR: $e',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        SnackBar(
+
+          content: Text(
+            'Erro de conexão',
+          ),
+        ),
       );
     }
   }
 
-  Future<void> deletarRacha(int id) async {
+  Future<void> sairRacha(
+    int id,
+  ) async {
+
+    try {
+
+      final response =
+          await http.delete(
+
+        Uri.parse(
+          '$baseUrl/rachas/sair/$id',
+        ),
+
+        headers: {
+
+          'Authorization':
+              'Bearer ${widget.token}',
+        },
+      );
+
+      if (!mounted) return;
+
+      final body =
+
+          response.body.isNotEmpty
+
+              ? jsonDecode(response.body)
+
+              : {};
+
+      if (response.statusCode == 200) {
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+
+          SnackBar(
+
+            backgroundColor:
+                Colors.orange,
+
+            content: Text(
+              'Você saiu do racha',
+            ),
+          ),
+        );
+
+        buscarRachas();
+
+      } else {
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+
+          SnackBar(
+
+            backgroundColor:
+                Colors.red,
+
+            content: Text(
+
+              body['erro'] ??
+
+              'Erro ao sair',
+            ),
+          ),
+        );
+      }
+
+    } catch (e) {
+
+      print(
+        'ERRO SAIR: $e',
+      );
+    }
+  }
+
+  Future<void> deletarRacha(
+    int id,
+  ) async {
 
     try {
 
@@ -177,13 +314,13 @@ class _RachaScreenState
 
       if (!mounted) return;
 
-     (
-        'DELETE STATUS: ${response.statusCode}',
-      );
+      final body =
 
-     (
-        'DELETE BODY: ${response.body}',
-      );
+          response.body.isNotEmpty
+
+              ? jsonDecode(response.body)
+
+              : {};
 
       if (response.statusCode == 200) {
 
@@ -193,6 +330,9 @@ class _RachaScreenState
             .showSnackBar(
 
           SnackBar(
+
+            backgroundColor:
+                Colors.green,
 
             content: Text(
               'Racha excluído',
@@ -207,8 +347,14 @@ class _RachaScreenState
 
           SnackBar(
 
+            backgroundColor:
+                Colors.red,
+
             content: Text(
-              response.body,
+
+              body['erro'] ??
+
+              'Erro ao excluir',
             ),
           ),
         );
@@ -216,19 +362,28 @@ class _RachaScreenState
 
     } catch (e) {
 
-     (
+      print(
         'ERRO DELETE: $e',
       );
     }
   }
 
-  void confirmarDelete(int id) {
+  void confirmarDelete(
+    int id,
+  ) {
 
     showDialog(
 
       context: context,
 
       builder: (_) => AlertDialog(
+
+        shape:
+            RoundedRectangleBorder(
+
+          borderRadius:
+              BorderRadius.circular(20),
+        ),
 
         title:
             Text('Excluir racha'),
@@ -251,7 +406,14 @@ class _RachaScreenState
                 Text('Cancelar'),
           ),
 
-          TextButton(
+          ElevatedButton(
+
+            style:
+                ElevatedButton.styleFrom(
+
+              backgroundColor:
+                  Colors.red,
+            ),
 
             onPressed: () {
 
@@ -260,14 +422,72 @@ class _RachaScreenState
               deletarRacha(id);
             },
 
-            child: Text(
+            child:
+                Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+  }
 
-              'Excluir',
+  void confirmarSaida(
+    int id,
+  ) {
 
-              style: TextStyle(
-                color: Colors.red,
-              ),
+    showDialog(
+
+      context: context,
+
+      builder: (_) => AlertDialog(
+
+        shape:
+            RoundedRectangleBorder(
+
+          borderRadius:
+              BorderRadius.circular(20),
+        ),
+
+        title:
+            Text(
+          'Sair do racha',
+        ),
+
+        content:
+            Text(
+          'Deseja realmente sair do racha?',
+        ),
+
+        actions: [
+
+          TextButton(
+
+            onPressed: () {
+
+              Navigator.pop(context);
+            },
+
+            child:
+                Text('Cancelar'),
+          ),
+
+          ElevatedButton(
+
+            style:
+                ElevatedButton.styleFrom(
+
+              backgroundColor:
+                  Colors.red,
             ),
+
+            onPressed: () async {
+
+              Navigator.pop(context);
+
+              await sairRacha(id);
+            },
+
+            child:
+                Text('Sair'),
           ),
         ],
       ),
@@ -279,11 +499,9 @@ class _RachaScreenState
 
     final podeCriarRacha =
 
-        widget.user['tipo'] ==
-                'funcionario' ||
+        widget.user['tipo'] == 'funcionario' ||
 
-            widget.user['tipo'] ==
-                'admin';
+        widget.user['tipo'] == 'admin';
 
     return Scaffold(
 
@@ -377,6 +595,12 @@ class _RachaScreenState
                         widget.user['tipo'] ==
                             'admin';
 
+                    final entrou =
+
+                        meusRachas.contains(
+                          r['id'],
+                        );
+
                     return Card(
 
                       elevation: 3,
@@ -385,7 +609,6 @@ class _RachaScreenState
                           EdgeInsets.symmetric(
 
                         horizontal: 12,
-
                         vertical: 8,
                       ),
 
@@ -482,9 +705,15 @@ class _RachaScreenState
 
                                 onPressed: () {
 
-                                  entrarRacha(
-                                    r['id'],
-                                  );
+                                  entrou
+
+                                      ? confirmarSaida(
+                                          r['id'],
+                                        )
+
+                                      : entrarRacha(
+                                          r['id'],
+                                        );
                                 },
 
                                 style:
@@ -492,14 +721,25 @@ class _RachaScreenState
                                         .styleFrom(
 
                                   backgroundColor:
-                                      Colors.green,
+
+                                      entrou
+
+                                          ? Colors.red
+
+                                          : Colors.green,
 
                                   foregroundColor:
                                       Colors.white,
                                 ),
 
-                                child:
-                                    Text('Entrar'),
+                                child: Text(
+
+                                  entrou
+
+                                      ? 'Sair'
+
+                                      : 'Entrar',
+                                ),
                               ),
 
                             if (isDono || isAdmin)

@@ -371,6 +371,65 @@ export const entrarRacha = async (req, res) => {
   }
 };
 
+export const sairRacha = async (req, res) => {
+
+  try {
+
+    const usuarioId =
+        req.user.id;
+
+    const rachaId =
+        req.params.id;
+
+    /**
+     * 🔍 BUSCAR ALUNO
+     */
+    const aluno =
+        await pool.query(
+
+      `SELECT id
+       FROM alunos
+       WHERE usuario_id = $1`,
+
+      [usuarioId]
+    );
+
+    if (aluno.rows.length === 0) {
+
+      return res.status(404).json({
+        erro: 'Aluno não encontrado'
+      });
+    }
+
+    const alunoId =
+        aluno.rows[0].id;
+
+    /**
+     * ❌ REMOVE
+     */
+    await pool.query(
+
+      `DELETE FROM racha_jogadores
+       WHERE racha_id = $1
+       AND aluno_id = $2`,
+
+      [rachaId, alunoId]
+    );
+
+    res.json({
+      sucesso: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      erro: err.message
+    });
+  }
+};
+
 /**
  * 📌 DELETAR RACHA
  */
