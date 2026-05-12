@@ -122,23 +122,60 @@ export const listarRachas = async (req, res) => {
 
   try {
 
+    const usuarioId =
+        req.user.id;
+
+    /**
+     * 🔍 BUSCAR ALUNO
+     */
+    const aluno =
+        await pool.query(
+
+      `SELECT id
+       FROM alunos
+       WHERE usuario_id = $1`,
+
+      [usuarioId]
+    );
+
+    let alunoId = null;
+
+    if (aluno.rows.length > 0) {
+
+      alunoId =
+          aluno.rows[0].id;
+    }
+
     const result =
         await pool.query(
 
       `SELECT
 
-        id,
-        data,
-        hora,
-        local,
-        quadra,
-        limite,
-        tipo,
-        criado_por
+        r.id,
+        r.data,
+        r.hora,
+        r.local,
+        r.quadra,
+        r.limite,
+        r.tipo,
+        r.criado_por,
 
-      FROM rachas
+        EXISTS(
 
-      ORDER BY data DESC`
+          SELECT 1
+
+          FROM racha_jogadores rj
+
+          WHERE rj.racha_id = r.id
+          AND rj.aluno_id = $1
+
+        ) AS entrou
+
+      FROM rachas r
+
+      ORDER BY r.data DESC`,
+
+      [alunoId]
     );
 
     res.json(
@@ -371,6 +408,9 @@ export const entrarRacha = async (req, res) => {
   }
 };
 
+/**
+ * 📌 SAIR DO RACHA
+ */
 export const sairRacha = async (req, res) => {
 
   try {
@@ -422,7 +462,10 @@ export const sairRacha = async (req, res) => {
 
   } catch (err) {
 
-    console.error(err);
+    console.error(
+      'ERRO SAIR RACHA:',
+      err
+    );
 
     res.status(500).json({
       erro: err.message
